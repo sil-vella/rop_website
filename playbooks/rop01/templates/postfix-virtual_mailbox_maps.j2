@@ -1,0 +1,7 @@
+# Postfix virtual_mailbox_maps: address -> domain/user/ (relative to virtual_mailbox_base)
+# Format: user@domain<TAB>domain/user/
+{% for domain in mail_domains %}
+{% for user in (mailboxes[domain] | default([])) %}
+{{ user }}@{{ domain }}	{{ domain }}/{{ user }}/
+{% endfor %}
+{% endfor %}

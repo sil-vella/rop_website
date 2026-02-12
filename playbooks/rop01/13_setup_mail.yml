@@ -1,0 +1,225 @@
+---
+# Virtual mailboxes with Postfix + Dovecot (Option B: directory per address).
+# Mailbox location: /var/mail/vhosts/<domain>/<user>/ (FHS standard under /var/mail).
+#
+# Run: ansible-playbook -i inventory.ini 13_setup_mail.yml -e vm_name=rop01
+# With vars: -e '{"mail_domains_var": ["reignofplay.com"], "mailboxes_var": {"reignofplay.com": ["admin", "info"]}, "mail_user_credentials_var": [{"email": "admin@reignofplay.com", "password": "secret"}]}'
+# Or use a vault file for mail_user_credentials_var. After run: set MX for your domain to this host, and open ports 25,587,465,143,993 if not already.
+#
+- name: Setup virtual mail (Postfix + Dovecot)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    mail_domains: "{{ mail_domains_var | default(['reignofplay.com']) }}"
+    # Mailboxes per domain: { 'reignofplay.com': [ 'admin', 'info', 'postmaster' ] }
+    mailboxes: "{{ mailboxes_var | default({ 'reignofplay.com': ['admin', 'info', 'postmaster'] }) }}"
+    # Login credentials (use vault). List of { email: 'user@domain', password: 'secret' }
+    mail_user_credentials: "{{ mail_user_credentials_var | default([]) }}"
+    mail_myhostname: "{{ mail_myhostname_var | default('mail.reignofplay.com') }}"
+    vmail_uid: 5000
+    vmail_gid: 5000
+    vmail_user: "vmail"
+    vmail_group: "vmail"
+    mail_home: "/var/mail/vhosts"
+    mail_open_firewall: "{{ mail_open_firewall_var | default(true) }}"
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Postfix and SASL
+      apt:
+        name:
+          - postfix
+          - libsasl2-2
+          - sasl2-bin
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Install Dovecot (IMAP + LMTP)
+      apt:
+        name:
+          - dovecot-core
+          - dovecot-imapd
+          - dovecot-lmtp
+        state: present
+
+    - name: Create vmail group
+      group:
+        name: "{{ vmail_group }}"
+        gid: "{{ vmail_gid }}"
+        state: present
+        system: yes
+
+    - name: Create vmail user
+      user:
+        name: "{{ vmail_user }}"
+        uid: "{{ vmail_uid }}"
+        group: "{{ vmail_group }}"
+        home: "{{ mail_home }}"
+        shell: /usr/sbin/nologin
+        state: present
+        system: yes
+        create_home: no
+
+    - name: Create mailbox root directory
+      file:
+        path: "{{ mail_home }}"
+        state: directory
+        owner: "{{ vmail_user }}"
+        group: "{{ vmail_group }}"
+        mode: "0750"
+
+    - name: Create virtual domain directories
+      file:
+        path: "{{ mail_home }}/{{ item }}"
+        state: directory
+        owner: "{{ vmail_user }}"
+        group: "{{ vmail_group }}"
+        mode: "0750"
+      loop: "{{ mail_domains }}"
+
+    - name: Create Maildir (new, cur, tmp) for each mailbox
+      file:
+        path: "{{ mail_home }}/{{ item.domain }}/{{ item.user }}/{{ item.subdir }}"
+        state: directory
+        owner: "{{ vmail_user }}"
+        group: "{{ vmail_group }}"
+        mode: "0750"
+      loop: "{{ mailbox_paths }}"
+      loop_control:
+        label: "{{ item.domain }}/{{ item.user }}/{{ item.subdir }}"
+      vars:
+        mailbox_paths: "{% set ns = namespace(paths=[]) %}{% for domain in mail_domains %}{% for user in (mailboxes[domain] | default([])) %}{% for subdir in ['new', 'cur', 'tmp'] %}{% set _ = ns.paths.append({'domain': domain, 'user': user, 'subdir': subdir}) %}{% endfor %}{% endfor %}{% endfor %}{{ ns.paths }}"
+
+    - name: Write Postfix virtual domains file
+      copy:
+        dest: /etc/postfix/virtual_domains
+        content: "{{ mail_domains | join('\n') }}\n"
+        mode: "0644"
+
+    - name: Write Postfix virtual mailbox map
+      template:
+        src: postfix-virtual_mailbox_maps.j2
+        dest: /etc/postfix/virtual_mailbox_maps
+        mode: "0644"
+
+    - name: Build Postfix virtual mailbox map db
+      command: postmap /etc/postfix/virtual_mailbox_maps
+      changed_when: true
+
+    - name: Set Postfix virtual and hostname parameters
+      postconf:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+      loop: "{{ postfix_virtual_params }}"
+      notify: Reload Postfix
+      vars:
+        postfix_virtual_params:
+          - { key: "myhostname", value: "{{ mail_myhostname }}" }
+          - { key: "virtual_mailbox_domains", value: "/etc/postfix/virtual_domains" }
+          - { key: "virtual_mailbox_maps", value: "hash:/etc/postfix/virtual_mailbox_maps" }
+          - { key: "virtual_mailbox_base", value: "{{ mail_home }}" }
+          - { key: "virtual_uid_maps", value: "static:{{ vmail_uid }}" }
+          - { key: "virtual_gid_maps", value: "static:{{ vmail_gid }}" }
+          - { key: "virtual_minimum_uid", value: "100" }
+          - { key: "virtual_transport", value: "lmtp:unix:private/dovecot-lmtp" }
+
+    - name: Create Dovecot users file from credentials
+      template:
+        src: dovecot-users.j2
+        dest: /etc/dovecot/users
+        mode: "0640"
+        owner: dovecot
+        group: dovecot
+      when: mail_user_credentials | length > 0
+      notify: Restart Dovecot
+
+    - name: Create empty Dovecot users file when no credentials
+      copy:
+        dest: /etc/dovecot/users
+        content: "# Add users with: email:password_hash:uid:gid::home:: (use doveadm pw -s SHA512-CRYPT -p 'password')\n"
+        mode: "0640"
+        owner: dovecot
+        group: dovecot
+      when: mail_user_credentials | length == 0
+      notify: Restart Dovecot
+
+    - name: Deploy Dovecot auth config (passwd-file + static userdb)
+      template:
+        src: dovecot-auth-virtual.conf.j2
+        dest: /etc/dovecot/conf.d/99-auth-virtual.conf
+        mode: "0644"
+      notify: Restart Dovecot
+
+    - name: Deploy Dovecot mail location and home
+      template:
+        src: dovecot-mail-virtual.conf.j2
+        dest: /etc/dovecot/conf.d/99-mail-virtual.conf
+        mode: "0644"
+      notify: Restart Dovecot
+
+    - name: Deploy Dovecot LMTP socket for Postfix
+      template:
+        src: dovecot-master-lmtp.conf.j2
+        dest: /etc/dovecot/conf.d/99-master-lmtp.conf
+        mode: "0644"
+      notify: Restart Dovecot
+
+    - name: Allow SMTP and IMAP ports in firewall
+      iptables:
+        table: filter
+        chain: INPUT
+        protocol: tcp
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        comment: "Allow mail {{ item }}"
+        state: present
+      loop: [ 25, 587, 465, 143, 993 ]
+      when: mail_open_firewall | bool
+      notify: Save iptables
+
+    - name: Save iptables rules
+      command: netfilter-persistent save
+      when: mail_open_firewall | bool
+      changed_when: true
+
+    - name: Start and enable Postfix
+      service:
+        name: postfix
+        state: started
+        enabled: yes
+
+    - name: Start and enable Dovecot
+      service:
+        name: dovecot
+        state: started
+        enabled: yes
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ Virtual mail setup complete
+          ============================================
+          Mailbox root: {{ mail_home }}
+          Domains: {{ mail_domains | join(', ') }}
+          Mailboxes: one directory per address under {{ mail_home }}/<domain>/<user>/
+          IMAP: dovecot (ports 143, 993)
+          SMTP: postfix (ports 25, 587, 465)
+          ============================================
+
+  handlers:
+    - name: Reload Postfix
+      service:
+        name: postfix
+        state: reloaded
+    - name: Restart Dovecot
+      service:
+        name: dovecot
+        state: restarted
+    - name: Save iptables
+      command: netfilter-persistent save

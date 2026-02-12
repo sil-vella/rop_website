@@ -1,0 +1,8 @@
+# Dovecot passwd-file: email:password_hash:uid:gid:gecos:home:shell
+# Passwords hashed with SHA512-CRYPT (Dovecot format).
+{% for cred in mail_user_credentials %}
+{% set parts = cred.email.split('@') %}
+{% set domain = parts[1] %}
+{% set user = parts[0] %}
+{{ cred.email }}:{{ cred.password | password_hash('sha512') }}:{{ vmail_uid }}:{{ vmail_gid }}::{{ mail_home }}/{{ domain }}/{{ user }}::
+{% endfor %}

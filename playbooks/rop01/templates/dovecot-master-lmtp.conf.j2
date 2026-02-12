@@ -1,0 +1,9 @@
+# LMTP socket for Postfix delivery (Dovecot LDA)
+# 99-master-lmtp.conf
+service lmtp {
+  unix_listener /var/spool/postfix/private/dovecot-lmtp {
+    mode = 0600
+    user = postfix
+    group = postfix
+  }
+}

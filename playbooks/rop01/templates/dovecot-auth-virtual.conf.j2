@@ -1,0 +1,10 @@
+# Virtual users: passwd-file for auth, passwd-file userdb for uid/gid/home
+# 99-auth-virtual.conf (overrides default auth)
+passdb {
+  driver = passwd-file
+  args = scheme=CRYPT username_format=%u /etc/dovecot/users
+}
+userdb {
+  driver = passwd-file
+  args = username_format=%u /etc/dovecot/users
+}

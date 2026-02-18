@@ -8,15 +8,21 @@
 		<title>Dutch Card Game - Reign of Play</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<meta name="description" content="Dutch Card Game by Reign of Play. Traditional rules, modern play." />
+		<meta name="description" content="Dutch Card Game by Reign of Play. Play online—clear your hand or finish with the least points. Queens peek, Jacks swap. Clear and collect mode included." />
 		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="assets/css/gallery.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<style>
+			#header .title img { max-height: 2em; height: auto; width: auto; display: block; }
+			#main .inner > .image.fit.banner { display: block; max-height: 220px; overflow: hidden; }
+			#main .inner > .image.fit.banner img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+		</style>
 	</head>
 	<body class="is-preload">
 
 		<!-- Header -->
 			<header id="header">
-				<a href="index.html" class="title">Reign of Play</a>
+				<a href="index.html" class="title"><img src="images/rop_logo.png" alt="Reign of Play" /></a>
 				<nav>
 					<ul>
 						<li><a href="index.html">Home</a></li>
@@ -34,18 +40,33 @@
 					<section id="main" class="wrapper">
 						<div class="inner">
 							<h1 class="major">Dutch Card Game</h1>
-							<span class="image fit"><img src="images/dutch/dutch_game_logo.jpg" alt="Dutch Card Game" /></span>
-							<p>Our flagship card game. Traditional rules, modern play—perfect for family and friends. Play to empty your hand or have the fewest points when someone calls <strong>Dutch</strong>.</p>
+							<span class="image fit banner"><img src="images/dutch/dutch_game_logo.jpg" alt="Dutch Card Game" /></span>
+							<p>Our flagship <strong>online</strong> card game.</p>
+							<hr />
+							<h2>Play online</h2>
+							<p>Play the Dutch Card Game in your browser at <a href="https://dutch.reignofplay.com">dutch.reignofplay.com</a>.</p>
+							<ul class="actions">
+								<li><a href="https://dutch.reignofplay.com" class="button primary icon solid fa-external-link-alt" target="_blank" rel="noopener noreferrer">Play at dutch.reignofplay.com</a></li>
+							</ul>
 							<hr />
 							<h2>How it works</h2>
-							<p>Players are dealt cards, draw and discard, and can play matching ranks out of turn. Special cards like Queens and Jacks have powers. Call <em>Dutch</em> to start the final round—lowest points (and fewer cards if tied) wins.</p>
-							<h3>Highlights</h3>
-							<ul class="alt">
-								<li>Classic Dutch card game rules</li>
-								<li>2–6 players, great for groups</li>
-								<li>Queen and Jack special powers</li>
-								<li>Jokers and Red King score zero</li>
-							</ul>
+							<p>Draw, play, or match the last card's rank (even out of turn). <strong>Queens</strong> peek at cards; <strong>Jacks</strong> swap two cards. In <strong>Clear and collect</strong>, collect all four of your rank from the discard to win. Otherwise, empty your hand or have the fewest points when someone calls final round.</p>
+
+							<!-- Reusable gallery: thumbnails, left/right arrows when overflowing, click → lightbox, close button -->
+							<div class="gallery" data-lightbox-id="gallery-lightbox">
+								<button type="button" class="gallery-arrow prev" aria-label="Previous"><span class="icon solid fa-chevron-left"></span></button>
+								<button type="button" class="gallery-arrow next" aria-label="Next"><span class="icon solid fa-chevron-right"></span></button>
+								<div class="gallery-viewport">
+									<div class="gallery-track">
+										<a href="#" class="gallery-thumb" role="button"><img src="images/dutch/dutch_game_logo.jpg" data-full="images/dutch/dutch_game_logo.jpg" alt="Dutch Card Game" /></a>
+										<a href="#" class="gallery-thumb" role="button"><img src="images/pic01.jpg" data-full="images/pic01.jpg" alt="" /></a>
+										<a href="#" class="gallery-thumb" role="button"><img src="images/pic02.jpg" data-full="images/pic02.jpg" alt="" /></a>
+										<a href="#" class="gallery-thumb" role="button"><img src="images/pic03.jpg" data-full="images/pic03.jpg" alt="" /></a>
+										<a href="#" class="gallery-thumb" role="button"><img src="images/pic04.jpg" data-full="images/pic04.jpg" alt="" /></a>
+									</div>
+								</div>
+							</div>
+
 							<hr />
 							<ul class="actions">
 								<li><a href="index.html#one" class="button primary">Back to The Games</a></li>
@@ -74,6 +95,17 @@
 			<script src="assets/js/breakpoints.min.js"></script>
 			<script src="assets/js/util.js"></script>
 			<script src="assets/js/main.js"></script>
+			<script src="assets/js/gallery.js"></script>
+
+		<!-- Shared lightbox for galleries (fixed overlay, outside wrapper) -->
+		<div id="gallery-lightbox" class="gallery-lightbox" aria-hidden="true">
+			<div class="gallery-lightbox-inner">
+				<img src="" alt="" />
+				<ul class="actions" style="margin-bottom: 0;">
+					<li><button type="button" class="button primary gallery-lightbox-close">Close</button></li>
+				</ul>
+			</div>
+		</div>
 
 	</body>
 </html>

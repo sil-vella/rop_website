@@ -1,0 +1,87 @@
+# Reign of Play — PHP Backend (php_base_001)
+
+Company website/backend PHP. Used by the Dutch dashboard and other RoP apps. Auth is local: register and login create/verify users in the dashboard DB and issue JWTs; no proxy to the main app. Python is used only for business (e.g. create-tournaments) with a service key.
+
+## PHP requirements and installation
+
+**You need PHP installed** to run this backend (e.g. under Apache/nginx, or PHP’s built-in web server for local dev).
+
+- **Suggested version:** PHP 7.4+ or 8.x.
+- **Check:** `php -v` and `php -m` (list loaded extensions).
+- **Required extensions (usually bundled):** `json`, `hash`, `pcre`. For outbound HTTP (calls to Python API), `allow_url_fopen` must be enabled in `php.ini` (default On).
+- **Required for auth:** `pdo_mysql` for user storage (register/login).
+
+**Install (macOS):** e.g. `brew install php` (or `php@8.2`). On Linux use your distro’s package (`apt install php`, `yum install php`, etc.).
+
+**Virtual environments:** PHP does **not** use virtual environments like Python. Use system/Homebrew PHP, Composer for deps, or Docker. See original doc for details.
+
+## Architecture
+
+- **User → Frontend** (e.g. `00_dashboard/Dutch/dsh_html_js_css_base_001`) → **PHP** (`php_base_001`) with `Authorization: Bearer <JWT>`.
+- **PHP** verifies JWT locally (decode + signature with `JWT_SECRET`). No auth call to Python.
+- **PHP → Python** only for business (e.g. create-tournaments) with header `X-Service-Key: DUTCH_MT_DASHBOARD_SERVICE_KEY`.
+- Company MySQL/MariaDB (e.g. `dutch_dashboard` and other DBs); phpMyAdmin for admin (see below).
+
+## Environment variables
+
+Create a `.env` file in `php_base_001/` (do **not** commit it). Required:
+
+| Variable | Description |
+|----------|-------------|
+| `PYTHON_API_BASE_URL` | Base URL of the Python API (e.g. `https://api.example.com`) |
+| `DUTCH_MT_DASHBOARD_SERVICE_KEY` | Secret key for service-to-service calls to Python |
+| `JWT_SECRET` | Secret used to sign and verify JWTs (this app only) |
+| `DB_HOST` | Database host (default `127.0.0.1`) |
+| `DB_NAME` | Database name (default `dutch_dashboard`) |
+| `DB_USER` | Database user |
+| `DB_PASSWORD` | Database password |
+
+Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
+
+**VPS (docker-compose):** The deploy playbook copies **this directory’s `.env`** to the VPS as **`.env.rop_website`** (so you can keep values here and deploy them). Include `MARIADB_ROOT_PASSWORD`, `MARIADB_USER`, `MARIADB_PASSWORD` for the MariaDB container (can match `DB_USER`/`DB_PASSWORD` if using one user), plus `DB_USER`, `DB_PASSWORD`, `PYTHON_API_BASE_URL`, `DUTCH_MT_DASHBOARD_SERVICE_KEY`, `JWT_SECRET`. If this `.env` is missing, the playbook creates a placeholder on the VPS instead.
+
+## Database setup and phpMyAdmin
+
+- **Database**: MySQL or MariaDB. Run `sql/init.sql` once to create the `dutch_dashboard` database and tables (users, audit_log, cache, sessions, etc.).
+- **phpMyAdmin**: Install separately; point at the same MySQL/MariaDB instance. Restrict by IP/VPN and use strong DB passwords.
+
+## API endpoints
+
+| Endpoint | Auth | Behaviour |
+|----------|------|-----------|
+| `api/register.php` | None | POST username, email, password; create user in DB; returns success/error. |
+| `api/login.php` | None | POST username, password; verify against DB; return access_token and refresh_token (JWT). |
+| `api/refresh.php` | None | POST refresh_token; verify JWT; return new access_token and refresh_token. |
+| `api/create-tournament.php` | JWT (verified locally) | Verify JWT in PHP; then POST to Python `/service/dutch/create-tournaments` with service key; return Python response. |
+| `api/health.php` | None | 200 and simple JSON status. |
+| `api/health-python.php` | JWT (verified locally) | Verify JWT in PHP; then GET Python `/service/health` with `X-Service-Key`; return combined status (dashboard + Python). |
+
+## Contract with Python (reference)
+
+- `GET /service/health` — requires `X-Service-Key`. Returns 200 and `{ "success": true, "service": "python-api", "status": "ok" }`.
+- `POST /service/dutch/create-tournaments` — requires `X-Service-Key`; body = tournament payload. PHP verifies JWTs itself; does not call `/service/auth/validate`.
+
+## Project layout
+
+```
+00_Codebase/php_base_001/
+├── api/
+│   ├── login.php      (local auth; issues JWT)
+│   ├── refresh.php    (local refresh; no proxy)
+│   ├── register.php   (create dashboard user)
+│   ├── create-tournament.php
+│   ├── health.php
+│   └── health-python.php
+├── lib/
+│   ├── jwt.php        (create + verify JWT)
+│   ├── db.php         (PDO connection for users)
+│   └── python_client.php
+├── sql/
+│   └── init.sql
+├── config.php
+├── Dockerfile    (build context: 00_Codebase; includes dashboard frontend from 00_dashboard/Dutch/dsh_html_js_css_base_001)
+├── .env          (not committed)
+└── README.md
+```
+
+Dashboard frontend lives under `00_Codebase/00_dashboard/Dutch/dsh_html_js_css_base_001/`. Set `window.DUTCH_DASHBOARD_API_BASE` to this backend’s URL (or `''` for same-origin when served together).

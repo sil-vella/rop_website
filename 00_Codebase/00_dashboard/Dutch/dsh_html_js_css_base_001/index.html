@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dutch.mt Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script>window.DUTCH_DASHBOARD_API_BASE = window.DUTCH_DASHBOARD_API_BASE || '';</script>
+</head>
+<body>
+  <div class="container">
+    <h1>Dutch.mt Dashboard</h1>
+    <div class="logout-wrap">
+      <button type="button" class="btn" id="logout-btn">Log out</button>
+    </div>
+
+    <div class="card">
+      <h2>Backend health</h2>
+      <p>Checks: Dashboard (JWT) → Python API (service key).</p>
+      <button type="button" class="btn" id="health-check-btn">Check backend</button>
+      <div id="health-result" class="health-result" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="card">
+      <h2>Create tournament</h2>
+      <form id="create-tournament-form">
+        <label for="tournament-name">Name</label>
+        <input type="text" id="tournament-name" name="name" required placeholder="Tournament name">
+        <label for="tournament-desc">Description (optional)</label>
+        <textarea id="tournament-desc" name="description" rows="2" placeholder="Description"></textarea>
+        <div id="tournament-error" class="error" role="alert" aria-live="polite"></div>
+        <div id="tournament-success" class="success" role="status" aria-live="polite"></div>
+        <button type="submit">Create tournament</button>
+      </form>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      if (!DutchDashboardAuth.requireAuth()) return;
+
+      document.getElementById('logout-btn').addEventListener('click', function () {
+        DutchDashboardAuth.logout(true);
+      });
+
+      var healthBtn = document.getElementById('health-check-btn');
+      var healthResult = document.getElementById('health-result');
+      if (healthBtn && healthResult) {
+        healthBtn.addEventListener('click', function () {
+          healthResult.textContent = 'Checking…';
+          healthResult.className = 'health-result';
+          DutchDashboardApi.fetch('/api/health-python.php', { method: 'GET', auth: true })
+            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+            .then(function (out) {
+              if (out.data.dashboard === 'ok') {
+                var py = out.data.python;
+                if (py && out.data.success) {
+                  healthResult.textContent = 'Dashboard: OK (JWT verified). Python: OK (service key accepted).';
+                  healthResult.className = 'health-result success';
+                } else if (py) {
+                  healthResult.textContent = 'Dashboard: OK. Python: HTTP ' + (py.status_code || '') + ' — ' + (py.body && py.body.error ? py.body.error : JSON.stringify(py.body));
+                  healthResult.className = 'health-result error';
+                } else {
+                  healthResult.textContent = 'Dashboard: OK. Python: not configured or request failed.';
+                  healthResult.className = 'health-result error';
+                }
+              } else {
+                healthResult.textContent = out.data.error || 'Request failed.';
+                healthResult.className = 'health-result error';
+              }
+            })
+            .catch(function (err) {
+              healthResult.textContent = err.message || 'Request failed.';
+              healthResult.className = 'health-result error';
+            });
+        });
+      }
+
+      var form = document.getElementById('create-tournament-form');
+      var errorEl = document.getElementById('tournament-error');
+      var successEl = document.getElementById('tournament-success');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorEl.textContent = '';
+        successEl.textContent = '';
+        var name = document.getElementById('tournament-name').value.trim();
+        var description = document.getElementById('tournament-desc').value.trim();
+        if (!name) {
+          errorEl.textContent = 'Please enter a tournament name.';
+          return;
+        }
+
+        var body = { name: name };
+        if (description) body.description = description;
+
+        DutchDashboardApi.fetch('/api/create-tournament.php', {
+          method: 'POST',
+          auth: true,
+          body: JSON.stringify(body)
+        })
+          .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; }); })
+          .then(function (out) {
+            if (out.ok && out.data && out.data.success !== false) {
+              successEl.textContent = 'Tournament created successfully.';
+              form.reset();
+            } else {
+              errorEl.textContent = (out.data && (out.data.error || out.data.message)) || 'Request failed.';
+            }
+          })
+          .catch(function (err) {
+            errorEl.textContent = err.message || 'Request failed.';
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

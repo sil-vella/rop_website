@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login — Dutch.mt Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <!-- Set API base if not set (e.g. sibling dsh_php_base_001 when served from same parent). -->
+  <script>window.DUTCH_DASHBOARD_API_BASE = window.DUTCH_DASHBOARD_API_BASE || '';</script>
+</head>
+<body>
+  <div class="container">
+    <h1>Dutch.mt Dashboard — Login</h1>
+    <form id="login-form" class="card">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+      <div id="login-error" class="error" role="alert" aria-live="polite"></div>
+      <button type="submit">Sign in</button>
+      <p class="form-footer">No account? <a href="register.html">Register</a></p>
+    </form>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById('login-form');
+      var errorEl = document.getElementById('login-error');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorEl.textContent = '';
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+        if (!username || !password) {
+          errorEl.textContent = 'Please enter username and password.';
+          return;
+        }
+
+        DutchDashboardAuth.login(username, password)
+          .then(function () {
+            var next = new URLSearchParams(window.location.search).get('next') || 'index.html';
+            window.location.href = next;
+          })
+          .catch(function (err) {
+            errorEl.textContent = err.message || 'Login failed.';
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

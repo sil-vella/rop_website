@@ -1,0 +1,177 @@
+---
+# Deploy RoP website only (PHP + MariaDB). Does not touch or depend on main app (Flask, MongoDB, Redis, Grafana, etc.).
+- name: Deploy RoP website Docker Compose (PHP + MariaDB only)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    app_dir: "/opt/apps/reignofplay/rop_website"
+    data_dir: "/opt/apps/reignofplay/rop_website/data"
+    compose_file: "docker-compose.yml"
+    vps_user: "{{ vm_name }}_user"
+  tasks:
+    - name: Create application directory structure (RoP website only)
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ data_dir }}/website_mysql"
+        - "{{ app_dir }}/00_Codebase/php_base_001/sql"
+
+    - name: Stat local RoP website .env (source for VPS .env.rop_website)
+      stat:
+        path: "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
+      register: local_rop_env_stat
+
+    - name: Copy local php_base_001/.env to VPS as .env.rop_website
+      copy:
+        src: "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
+        dest: "{{ app_dir }}/.env.rop_website"
+        mode: '0640'
+        owner: "{{ vps_user }}"
+        group: "{{ vps_user }}"
+      when: local_rop_env_stat.stat.exists | default(false)
+
+    - name: Stat existing .env.rop_website on VPS (for fallback when local .env missing)
+      stat:
+        path: "{{ app_dir }}/.env.rop_website"
+      register: rop_website_env_stat
+      when: not (local_rop_env_stat.stat.exists | default(false))
+
+    - name: Create .env.rop_website placeholder (only if local .env missing and VPS file missing)
+      copy:
+        content: |
+          # RoP website PHP + DB. Fill values on VPS or add 00_Codebase/php_base_001/.env locally and re-run.
+          MARIADB_ROOT_PASSWORD=
+          MARIADB_USER=rop_web
+          MARIADB_PASSWORD=
+          DB_USER=rop_web
+          DB_PASSWORD=
+          PYTHON_API_BASE_URL=
+          DUTCH_MT_DASHBOARD_SERVICE_KEY=
+          JWT_SECRET=
+        dest: "{{ app_dir }}/.env.rop_website"
+        mode: '0640'
+        owner: "{{ vps_user }}"
+        group: "{{ vps_user }}"
+      when: >-
+        not (local_rop_env_stat.stat.exists | default(false))
+        and not (rop_website_env_stat.stat.exists | default(false))
+
+    - name: Copy RoP website init.sql to VPS (for rop_website_db first-run schema)
+      copy:
+        src: "{{ playbook_dir }}/../../00_Codebase/php_base_001/sql/init.sql"
+        dest: "{{ app_dir }}/00_Codebase/php_base_001/sql/init.sql"
+        mode: '0644'
+        remote_src: false
+
+    - name: Copy docker-compose.yml to server (PHP + MariaDB only)
+      copy:
+        src: "{{ playbook_dir }}/../../{{ compose_file }}"
+        dest: "{{ app_dir }}/{{ compose_file }}"
+        mode: '0644'
+        remote_src: false
+
+    - name: Verify docker-compose.yml was copied
+      stat:
+        path: "{{ app_dir }}/{{ compose_file }}"
+      register: compose_file_stat
+
+    - name: Display docker-compose location
+      debug:
+        msg: |
+          ============================================
+          RoP website Docker Compose deployed (PHP + MariaDB only).
+          ============================================
+          Location: {{ app_dir }}/{{ compose_file }}
+          To start: cd {{ app_dir }} && docker compose up -d
+          ============================================
+
+    - name: Check if Docker Compose is available
+      shell: sg docker -c "docker compose version"
+      register: docker_compose_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display Docker Compose version
+      debug:
+        msg: "{{ docker_compose_check.stdout }}"
+      when: docker_compose_check.rc is defined and docker_compose_check.rc == 0
+
+    - name: Validate docker-compose.yml syntax
+      shell: sg docker -c "docker compose -f {{ app_dir }}/{{ compose_file }} config"
+      register: compose_validate
+      changed_when: false
+      failed_when: false
+      when: docker_compose_check.rc is defined and docker_compose_check.rc == 0
+
+    - name: Display validation result
+      debug:
+        msg: "Docker Compose validation: {{ compose_validate.stdout if (compose_validate.rc is defined and compose_validate.rc == 0) else 'Failed' }}"
+      when: compose_validate is defined and compose_validate.rc is defined and compose_validate.rc == 0
+
+    - name: Prompt for interactive docker compose run
+      pause:
+        prompt: |
+          ============================================
+          Ready to start RoP website services (PHP + MariaDB)?
+          Press Enter to continue, or Ctrl+C to cancel.
+          ============================================
+      register: start_prompt
+      when: ansible_check_mode == False
+
+    - name: Pull latest Docker images
+      shell: sg docker -c "cd {{ app_dir }} && docker compose -f {{ compose_file }} pull"
+      register: compose_pull_result
+      when: start_prompt is defined and start_prompt.user_input is defined
+
+    - name: Start Docker Compose services (rop_website_db, rop_website_php)
+      shell: sg docker -c "cd {{ app_dir }} && docker compose -f {{ compose_file }} up -d"
+      register: compose_up_result
+      when: start_prompt is defined and start_prompt.user_input is defined
+
+    - name: Display service startup result
+      debug:
+        msg: "{{ compose_up_result.stdout_lines | default([]) }}"
+      when: compose_up_result is defined and compose_up_result.stdout_lines is defined
+
+    - name: Wait for RoP website services to be ready
+      wait_for:
+        host: localhost
+        port: "{{ item }}"
+        delay: 5
+        timeout: 30
+      loop:
+        - 3307   # MariaDB
+        - 8081   # PHP
+      failed_when: false
+      when: compose_up_result is defined and compose_up_result.changed | default(false)
+
+    - name: Check running containers
+      shell: sg docker -c "cd {{ app_dir }} && docker compose -f {{ compose_file }} ps"
+      register: container_status
+      changed_when: false
+      when: compose_up_result is defined and compose_up_result.changed | default(false)
+
+    - name: Display container status
+      debug:
+        msg: |
+          ============================================
+          Container Status (RoP website only):
+          ============================================
+          {{ container_status.stdout | default('Containers not started') }}
+          ============================================
+      when: container_status is defined
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ RoP website deployment complete (PHP + MariaDB).
+          ============================================
+          cd {{ app_dir }}
+          docker compose ps
+          docker compose logs -f
+          ============================================
+      when: compose_up_result is defined and compose_up_result.changed | default(false)

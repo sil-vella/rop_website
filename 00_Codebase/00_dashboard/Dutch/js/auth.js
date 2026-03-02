@@ -58,9 +58,51 @@
     }
   }
 
+  /**
+   * Decode JWT payload (no signature check; used only for UI role visibility).
+   * @returns {object|null} Payload or null
+   */
+  function getPayload() {
+    var token = Api.getToken();
+    if (!token || typeof token !== 'string') return null;
+    var parts = token.split('.');
+    if (parts.length !== 3) return null;
+    try {
+      var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      var pad = b64.length % 4;
+      if (pad) b64 += (new Array(5 - pad)).join('=');
+      return JSON.parse(decodeURIComponent(escape(atob(b64))));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Get current user role from JWT (default 'user' if missing).
+   * @returns {string}
+   */
+  function getRole() {
+    var p = getPayload();
+    return (p && typeof p.role === 'string') ? p.role : 'user';
+  }
+
+  /**
+   * Return true if current user's role is in the allowed list.
+   * @param {string[]} allowedRoles e.g. ['admin', 'editor']
+   * @returns {boolean}
+   */
+  function hasRole(allowedRoles) {
+    if (!Array.isArray(allowedRoles) || allowedRoles.length === 0) return false;
+    var role = getRole();
+    return allowedRoles.indexOf(role) !== -1;
+  }
+
   global.DutchDashboardAuth = {
     requireAuth: requireAuth,
     login: login,
-    logout: logout
+    logout: logout,
+    getPayload: getPayload,
+    getRole: getRole,
+    hasRole: hasRole
   };
 })(typeof window !== 'undefined' ? window : this);

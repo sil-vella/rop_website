@@ -44,7 +44,7 @@ if (!$pdo) {
     exit;
 }
 
-$stmt = $pdo->prepare('SELECT id, username, email, password_hash FROM users WHERE username = ? LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, username, email, password_hash, role FROM users WHERE username = ? LIMIT 1');
 $stmt->execute([$username]);
 $user = $stmt->fetch();
 
@@ -55,10 +55,12 @@ if (!$user || !password_verify($password, $user['password_hash'])) {
 }
 
 $userId = (string) $user['id'];
+$role = isset($user['role']) ? (string) $user['role'] : 'user';
 $accessPayload = [
     'user_id'  => $userId,
     'username' => $user['username'],
     'email'    => $user['email'],
+    'role'     => $role,
 ];
 $refreshPayload = ['user_id' => $userId, 'type' => 'refresh'];
 

@@ -10,18 +10,18 @@
 <body>
   <div class="container">
     <h1>Dutch.mt Dashboard</h1>
+    <p id="user-role-info" class="muted" style="margin-bottom: 0.5rem;"></p>
     <div class="logout-wrap">
       <button type="button" class="btn" id="logout-btn">Log out</button>
     </div>
 
-    <div class="card">
-      <h2>Backend health</h2>
-      <p>Checks: Dashboard (JWT) → Python API (service key).</p>
-      <button type="button" class="btn" id="health-check-btn">Check backend</button>
-      <div id="health-result" class="health-result" role="status" aria-live="polite"></div>
+    <div id="section-metrics" class="card" style="display: none;" data-roles="admin,editor">
+      <h2>Metrics and analytics</h2>
+      <p>View metrics and analytics (admin, editor).</p>
+      <p class="muted">Content placeholder — integrate your metrics/analytics here.</p>
     </div>
 
-    <div class="card">
+    <div id="section-create-tournament" class="card" style="display: none;" data-roles="admin">
       <h2>Create tournament</h2>
       <form id="create-tournament-form">
         <label for="tournament-name">Name</label>
@@ -40,42 +40,23 @@
     (function () {
       if (!DutchDashboardAuth.requireAuth()) return;
 
+      var role = DutchDashboardAuth.getRole();
+      var payload = DutchDashboardAuth.getPayload && DutchDashboardAuth.getPayload();
+      var username = (payload && payload.username) ? payload.username : '';
+      document.getElementById('user-role-info').textContent =
+        username ? 'Logged in as ' + username + ' (role: ' + role + ')' : 'Role: ' + role;
+
+      // Show sections only for allowed roles (use block so card is visible)
+      if (DutchDashboardAuth.hasRole(['admin', 'editor'])) {
+        document.getElementById('section-metrics').style.display = 'block';
+      }
+      if (DutchDashboardAuth.hasRole(['admin'])) {
+        document.getElementById('section-create-tournament').style.display = 'block';
+      }
+
       document.getElementById('logout-btn').addEventListener('click', function () {
         DutchDashboardAuth.logout(true);
       });
-
-      var healthBtn = document.getElementById('health-check-btn');
-      var healthResult = document.getElementById('health-result');
-      if (healthBtn && healthResult) {
-        healthBtn.addEventListener('click', function () {
-          healthResult.textContent = 'Checking…';
-          healthResult.className = 'health-result';
-          DutchDashboardApi.fetch('/api/health-python.php', { method: 'GET', auth: true })
-            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
-            .then(function (out) {
-              if (out.data.dashboard === 'ok') {
-                var py = out.data.python;
-                if (py && out.data.success) {
-                  healthResult.textContent = 'Dashboard: OK (JWT verified). Python: OK (service key accepted).';
-                  healthResult.className = 'health-result success';
-                } else if (py) {
-                  healthResult.textContent = 'Dashboard: OK. Python: HTTP ' + (py.status_code || '') + ' — ' + (py.body && py.body.error ? py.body.error : JSON.stringify(py.body));
-                  healthResult.className = 'health-result error';
-                } else {
-                  healthResult.textContent = 'Dashboard: OK. Python: not configured or request failed.';
-                  healthResult.className = 'health-result error';
-                }
-              } else {
-                healthResult.textContent = out.data.error || 'Request failed.';
-                healthResult.className = 'health-result error';
-              }
-            })
-            .catch(function (err) {
-              healthResult.textContent = err.message || 'Request failed.';
-              healthResult.className = 'health-result error';
-            });
-        });
-      }
 
       var form = document.getElementById('create-tournament-form');
       var errorEl = document.getElementById('tournament-error');

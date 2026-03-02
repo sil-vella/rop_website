@@ -63,8 +63,8 @@ if ($passwordHash === false) {
 }
 
 try {
-    $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)');
-    $stmt->execute([$username, $email, $passwordHash]);
+    $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
+    $stmt->execute([$username, $email, $passwordHash, 'user']);
 } catch (PDOException $e) {
     if ($e->getCode() == 23000) {
         http_response_code(409);

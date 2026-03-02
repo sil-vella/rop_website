@@ -1,0 +1,66 @@
+---
+# Run pending DB migrations on rop_website (dutch_dashboard).
+# Copies migrations from repo, checks schema_migrations table, runs only migrations not yet applied.
+# Add new .sql files under 00_Codebase/php_base_001/sql/migrations/ (e.g. 002_add_foo.sql); they run in sorted order.
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/06_run_db_migrations.yml -e vm_name=rop01
+- name: Run RoP website DB migrations (dutch_dashboard)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    app_dir: "/opt/apps/reignofplay/rop_website"
+    db_name: "dutch_dashboard"
+    local_migrations_dir: "{{ playbook_dir }}/../../00_Codebase/php_base_001/sql/migrations"
+    vps_migrations_dir: "{{ app_dir }}/00_Codebase/php_base_001/sql/migrations"
+  tasks:
+    - name: Ensure migrations directory exists on VPS
+      file:
+        path: "{{ vps_migrations_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy DB migrations to VPS
+      copy:
+        src: "{{ local_migrations_dir }}/"
+        dest: "{{ vps_migrations_dir }}/"
+        mode: '0644'
+        remote_src: false
+
+    - name: List migration files on VPS (sorted)
+      find:
+        path: "{{ vps_migrations_dir }}"
+        patterns: "*.sql"
+        file_type: file
+      register: migration_files_find
+
+    - name: Set migration_ids from found files
+      set_fact:
+        migration_ids: "{{ migration_files_find.files | map(attribute='path') | map('regex_replace', '^.*/', '') | map('regex_replace', '\\.sql$', '') | sort | list }}"
+      when: migration_files_find.files | length > 0
+
+    - name: Ensure MariaDB is reachable
+      wait_for:
+        host: localhost
+        port: 3307
+        delay: 2
+        timeout: 30
+      when: not ansible_check_mode | default(false)
+
+    - name: Process each migration (check, run if needed, record)
+      include_tasks: 06_tasks_run_one_migration.yml
+      loop: "{{ migration_ids | default([]) }}"
+      loop_control:
+        loop_var: migration_id
+      when: migration_ids is defined and migration_ids | length > 0
+
+    - name: List applied migrations
+      shell: >
+        sg docker -c
+        "docker exec rop_website_db sh -c 'mariadb -u\$MARIADB_USER -p\$MARIADB_PASSWORD {{ db_name }} -e \"SELECT migration_id, applied_at FROM schema_migrations ORDER BY migration_id\"' 2>/dev/null"
+      register: list_migrations
+      changed_when: false
+      failed_when: false
+
+    - name: Display applied migrations
+      debug:
+        msg: "{{ list_migrations.stdout_lines | default([]) }}"
+      when: list_migrations.stdout_lines is defined and list_migrations.stdout_lines | length > 0

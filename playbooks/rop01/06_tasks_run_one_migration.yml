@@ -1,0 +1,25 @@
+# Run one migration if not yet applied. Called from 06_run_db_migrations.yml with migration_id.
+- name: Check if migration already applied
+  shell: >
+    sg docker -c
+    "docker exec rop_website_db sh -c 'mariadb -u\$MARIADB_USER -p\$MARIADB_PASSWORD {{ db_name }} -N -e \"SELECT 1 FROM schema_migrations WHERE migration_id='"'"'{{ migration_id }}'"'"' LIMIT 1\"' 2>/dev/null"
+  register: applied_check
+  changed_when: false
+  failed_when: false
+  when: not ansible_check_mode | default(false)
+
+- name: Run migration (not yet applied)
+  shell: >
+    sg docker -c "cat {{ vps_migrations_dir }}/{{ migration_id }}.sql
+    | docker exec -i rop_website_db sh -c 'mariadb -u\$MARIADB_USER -p\$MARIADB_PASSWORD {{ db_name }}'"
+  when: >-
+    not ansible_check_mode | default(false)
+    and (applied_check.stdout | default('') | trim) != '1'
+
+- name: Record migration as applied
+  shell: >
+    sg docker -c
+    "echo \"INSERT IGNORE INTO schema_migrations (migration_id) VALUES ('{{ migration_id }}');\" | docker exec -i rop_website_db sh -c 'mariadb -u\$MARIADB_USER -p\$MARIADB_PASSWORD {{ db_name }}'"
+  when: >-
+    not ansible_check_mode | default(false)
+    and (applied_check.stdout | default('') | trim) != '1'

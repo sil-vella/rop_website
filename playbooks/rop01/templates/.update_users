@@ -1,0 +1,14 @@
+# Users to add or update in dutch_dashboard.users.
+# Edit this file and run: python3 playbooks/rop01/07_update_dashboard_users.py
+# Password is hashed via PHP (PASSWORD_DEFAULT) before INSERT/UPDATE.
+---
+dashboard_users:
+  - username: admin
+    email: admin@reignofplay.com   # or whatever it was
+    role: admin
+    # password omitted: existing user, role-only update
+
+  - username: editor
+    email: marialaura.fenech@gmail.com
+    role: editor
+    password: "12345678"

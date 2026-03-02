@@ -34,10 +34,12 @@ CREATE TABLE IF NOT EXISTS users (
   username      VARCHAR(255) NOT NULL,
   email         VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  role          VARCHAR(64)  NOT NULL DEFAULT 'user',
   created_at    DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   UNIQUE KEY uk_username (username),
   UNIQUE KEY uk_email (email),
-  INDEX idx_username (username)
+  INDEX idx_username (username),
+  INDEX idx_role (role)
 ) ENGINE=InnoDB;
 
 -- Optional: dashboard sessions (if you store server-side session data)

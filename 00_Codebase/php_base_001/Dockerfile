@@ -1,5 +1,5 @@
 # Reign of Play website — PHP backend + dashboard frontends (e.g. Dutch dashboard)
-# Build context: 00_Codebase (so we can COPY php_base_001 and 00_dashboard/Dutch/dsh_html_js_css_base_001)
+# Build context: 00_Codebase (so we can COPY php_base_001 and 00_dashboard/Dutch)
 # Do not COPY .env; provide at runtime via docker-compose or env.
 
 FROM php:8.2-apache
@@ -20,15 +20,14 @@ COPY php_base_001/config.php /var/www/html/
 COPY php_base_001/api /var/www/html/api
 COPY php_base_001/lib /var/www/html/lib
 
-# Copy Dutch dashboard frontend (one app; more dashboards can be added under 00_dashboard/)
-COPY 00_dashboard/Dutch/dsh_html_js_css_base_001/index.html /var/www/html/
-COPY 00_dashboard/Dutch/dsh_html_js_css_base_001/login.html /var/www/html/
-COPY 00_dashboard/Dutch/dsh_html_js_css_base_001/register.html /var/www/html/
-COPY 00_dashboard/Dutch/dsh_html_js_css_base_001/css /var/www/html/css
-COPY 00_dashboard/Dutch/dsh_html_js_css_base_001/js /var/www/html/js
+# Copy Dutch dashboard frontend (login only; no register)
+COPY 00_dashboard/Dutch/index.html /var/www/html/
+COPY 00_dashboard/Dutch/login.html /var/www/html/
+COPY 00_dashboard/Dutch/css /var/www/html/css
+COPY 00_dashboard/Dutch/js /var/www/html/js
 
 # In container, API is same-origin (/api/); frontend default is same-origin
-RUN sed -i "s|../dsh_php_base_001|''|g" /var/www/html/index.html /var/www/html/login.html /var/www/html/register.html 2>/dev/null || true
+RUN sed -i "s|../dsh_php_base_001|''|g" /var/www/html/index.html /var/www/html/login.html 2>/dev/null || true
 
 # Allow .htaccess if present (optional)
 RUN chown -R www-data:www-data /var/www/html

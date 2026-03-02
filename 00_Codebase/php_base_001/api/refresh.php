@@ -57,7 +57,7 @@ if (!$pdo) {
     exit;
 }
 
-$stmt = $pdo->prepare('SELECT id, username, email FROM users WHERE id = ? LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, username, email, role FROM users WHERE id = ? LIMIT 1');
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
@@ -67,10 +67,12 @@ if (!$user) {
     exit;
 }
 
+$role = isset($user['role']) ? (string) $user['role'] : 'user';
 $accessPayload = [
     'user_id'  => (string) $user['id'],
     'username' => $user['username'],
     'email'    => $user['email'],
+    'role'     => $role,
 ];
 $refreshPayload = ['user_id' => (string) $user['id'], 'type' => 'refresh'];
 

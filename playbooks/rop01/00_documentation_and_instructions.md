@@ -85,13 +85,27 @@ Verified by SSH to rop01. Use this when checking or deploying web files for reig
 
 ---
 
+## DB migrations (playbook 06)
+
+Migrations update **only** the installed database (new tables, columns, etc.) without touching init.sql or redeploying the stack.
+
+- **Location:** `00_Codebase/php_base_001/sql/migrations/`. Files run in **sorted order** by filename (e.g. `000_bootstrap.sql`, `001_add_role_to_users.sql`).
+- **Tracking:** Table `dutch_dashboard.schema_migrations` records which migrations have been applied (`migration_id`, `applied_at`). Playbook 06 checks this and runs only migrations not yet applied.
+- **Bootstrap:** `000_bootstrap.sql` creates `schema_migrations` (safe to run first; idempotent).
+- **Adding changes:** Add a new `.sql` file (e.g. `002_add_some_table.sql`) with `USE dutch_dashboard;` and your DDL. Run playbook 06; it will run the new file once and record it.
+- **Run:** `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/06_run_db_migrations.yml -e vm_name=rop01` (after stack is up).
+
+---
+
 ## Scope of this project in playbooks/rop01
 
 - **We do not:** Implement or change VPS connectivity, SSH keys, inventory, firewall, base nginx/Docker setup, or other major structural config. That stays in the other project.
 - **We do:** PHP server–related logic for the **company (Reign of Play) website/backend** on the VPS. That includes, for example:
   - Building and deploying the company PHP/website image (Dockerfile: `00_Codebase/php_base_001/Dockerfile`, build context: `00_Codebase`; `01_build_and_push_php_docker.py`, `rop_website_php` in docker-compose).
   - The company SQL DB (`rop_website_db` in docker-compose) used by the PHP backend (e.g. database `dutch_dashboard`).
-  - **Deploy playbook** `02_deploy_docker_compose.yml`: deploys **only** the RoP website stack (PHP + MariaDB). Uses a **dedicated app dir** `/opt/apps/reignofplay/rop_website` (does not touch the main app at `/opt/apps/reignofplay/dutch`). Copies `docker-compose.yml` (which contains only `rop_website_php` and `rop_website_db`), `init.sql`, and **VPS `.env.rop_website`** from local `00_Codebase/php_base_001/.env` when that file exists; otherwise creates a placeholder. Waits for ports 3307 and 8081. Run with: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/02_deploy_docker_compose.yml -e vm_name=rop01`.
+  - **Deploy playbook** `02_deploy_docker_compose.yml`: deploys **only** the RoP website stack (PHP + MariaDB). Uses a **dedicated app dir** `/opt/apps/reignofplay/rop_website` (does not touch the main app at `/opt/apps/reignofplay/dutch`). Copies `docker-compose.yml` (which contains only `rop_website_php` and `rop_website_db`), `init.sql`, **migrations** (`sql/migrations/`), and **VPS `.env.rop_website`** from local `00_Codebase/php_base_001/.env` when that file exists; otherwise creates a placeholder. Waits for ports 3307 and 8081. Run with: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/02_deploy_docker_compose.yml -e vm_name=rop01`.
+  - **DB migrations playbook** `06_run_db_migrations.yml`: updates **only** the installed DB (dutch_dashboard). Copies `sql/migrations/` to the VPS, checks the `schema_migrations` table for already-applied migrations, and runs any new migration files in sorted order (e.g. `000_bootstrap.sql`, `001_add_role_to_users.sql`). Add new tables/columns by adding a new `.sql` file under `00_Codebase/php_base_001/sql/migrations/`; the playbook will run it once and record it. Run after deploy or anytime: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/06_run_db_migrations.yml -e vm_name=rop01`.
+  - **Dashboard users update** `07_update_dashboard_users.py`: updates `dutch_dashboard.users` from `playbooks/rop01/templates/.update_users` (YAML list under `dashboard_users`). Uses SSH connection from `playbooks/rop01/inventory.ini` ([rop01_user] group: ansible_host, ansible_user, ansible_ssh_private_key_file). Edit `templates/.update_users` with username, email, role, password (plain; hashed via `rop_website_php` on the host). Run from repo root: `python3 playbooks/rop01/07_update_dashboard_users.py`. New users are INSERTed; existing users are UPDATEd only for columns that differ.
   - **Static web deploy** `03_deploy_reignofplay_web.yml`: syncs the contents of local `00_Codebase/html_js_css_base_001` to `/var/www/reignofplay.com` on the VPS. Does not delete existing subdirs (e.g. `downloads/`, `sim_players/`, `sponsors/`); sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/03_deploy_reignofplay_web.yml -e vm_name=rop01`.
   - **Nginx dashboard site** `04_config_nginx.yml`: adds a server block for `dashboard.reignofplay.com` serving from `/var/www/reignofplay.com/dashboard`. Ensures the dashboard docroot exists, deploys the site config, enables it, and reloads nginx. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04_config_nginx.yml -e vm_name=rop01`. For HTTPS, run certbot for `dashboard.reignofplay.com` after the first deploy.
   - **Dashboard deploy** `05_deploy_dashboard.yml`: syncs the contents of local `00_Codebase/00_dashboard` to `/var/www/reignofplay.com/dashboard` (dashboard.reignofplay.com). Sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05_deploy_dashboard.yml -e vm_name=rop01`.

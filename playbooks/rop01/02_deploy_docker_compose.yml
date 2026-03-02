@@ -23,6 +23,9 @@
       stat:
         path: "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
       register: local_rop_env_stat
+      delegate_to: localhost
+      run_once: true
+      become: false
 
     - name: Copy local php_base_001/.env to VPS as .env.rop_website
       copy:

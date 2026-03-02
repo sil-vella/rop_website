@@ -1,0 +1,44 @@
+---
+# Add nginx site for dashboard.reignofplay.com → /var/www/reignofplay.com/dashboard
+# Append-only: creates/updates only sites-available/dashboard.reignofplay.com (and its symlink).
+# Does not modify reignofplay.com, dutch.reignofplay.com, or any other project's nginx config.
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04_config_nginx.yml -e vm_name=rop01
+- name: Configure nginx for dashboard.reignofplay.com
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    dashboard_root: "/var/www/reignofplay.com/dashboard"
+    dashboard_php_backend_port: "8081"   # rop_website_php container (host port)
+    nginx_site_name: "dashboard.reignofplay.com"
+    nginx_available: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+    nginx_enabled: "/etc/nginx/sites-enabled/{{ nginx_site_name }}"
+  tasks:
+    - name: Ensure dashboard docroot exists
+      file:
+        path: "{{ dashboard_root }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Deploy nginx config for dashboard.reignofplay.com
+      template:
+        src: "{{ playbook_dir }}/templates/nginx-dashboard-reignofplay.com.conf.j2"
+        dest: "{{ nginx_available }}"
+        mode: '0644'
+        backup: true
+
+    - name: Enable dashboard.reignofplay.com site
+      file:
+        src: "{{ nginx_available }}"
+        dest: "{{ nginx_enabled }}"
+        state: link
+
+    - name: Test nginx configuration
+      command: nginx -t
+      changed_when: false
+
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded

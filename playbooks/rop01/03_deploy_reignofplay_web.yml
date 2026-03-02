@@ -1,0 +1,44 @@
+---
+# Sync static site from 00_Codebase/html_js_css_base_001 to reignofplay.com docroot.
+# Preserves existing subdirs (downloads/, sim_players/, sponsors/); updates index.html and assets.
+- name: Deploy reignofplay.com static web (html_js_css_base_001 → docroot)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    web_docroot: "/var/www/reignofplay.com"
+    local_site_src: "{{ playbook_dir }}/../../00_Codebase/html_js_css_base_001"
+  tasks:
+    - name: Ensure web docroot exists
+      file:
+        path: "{{ web_docroot }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Sync html_js_css_base_001 contents to docroot (no delete; preserves downloads/, sim_players/, sponsors/)
+      synchronize:
+        src: "{{ local_site_src }}/"
+        dest: "{{ web_docroot }}/"
+        delete: no
+        recursive: true
+        # Ownership set by next task (--chown not supported on macOS rsync)
+
+    - name: Set ownership of docroot to www-data (recursive)
+      file:
+        path: "{{ web_docroot }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        recurse: true
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ reignofplay.com static site deployed.
+          ============================================
+          Source: {{ local_site_src }}
+          Dest:   {{ web_docroot }}
+          Existing subdirs (downloads/, sim_players/, sponsors/) were preserved.
+          ============================================

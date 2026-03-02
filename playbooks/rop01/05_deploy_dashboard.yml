@@ -1,0 +1,42 @@
+---
+# Sync dashboard app from 00_Codebase/00_dashboard to /var/www/reignofplay.com/dashboard (dashboard.reignofplay.com).
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05_deploy_dashboard.yml -e vm_name=rop01
+- name: Deploy dashboard (00_dashboard → /dashboard docroot)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    dashboard_docroot: "/var/www/reignofplay.com/dashboard"
+    local_dashboard_src: "{{ playbook_dir }}/../../00_Codebase/00_dashboard"
+  tasks:
+    - name: Ensure dashboard docroot exists
+      file:
+        path: "{{ dashboard_docroot }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Sync 00_dashboard contents to dashboard docroot
+      synchronize:
+        src: "{{ local_dashboard_src }}/"
+        dest: "{{ dashboard_docroot }}/"
+        delete: no
+        recursive: true
+
+    - name: Set ownership of dashboard docroot to www-data (recursive)
+      file:
+        path: "{{ dashboard_docroot }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        recurse: true
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ dashboard.reignofplay.com content deployed.
+          ============================================
+          Source: {{ local_dashboard_src }}
+          Dest:   {{ dashboard_docroot }}
+          ============================================

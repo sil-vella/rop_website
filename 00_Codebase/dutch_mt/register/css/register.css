@@ -1,0 +1,215 @@
+/* Reign of Play / Hyperspace theme (match html_js_css_base_001) */
+:root {
+  --rop-bg: #312450;
+  --rop-bg-alt: #2a1e47;
+  --rop-fg: rgba(255, 255, 255, 0.55);
+  --rop-fg-bold: #ffffff;
+  --rop-fg-light: rgba(255, 255, 255, 0.35);
+  --rop-border: rgba(255, 255, 255, 0.15);
+  --rop-border-bg: rgba(255, 255, 255, 0.05);
+  --rop-accent1: #5e42a6;
+  --rop-accent3: #b74e91;
+  --rop-element-height: 2.75em;
+  --rop-element-margin: 2em;
+  --rop-radius: 0.25em;
+  --rop-transition: 0.2s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--rop-bg);
+  color: var(--rop-fg);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16.5pt;
+  font-weight: normal;
+  line-height: 1.75;
+  margin: 0;
+  min-height: 100vh;
+  padding: var(--rop-element-margin) 1rem;
+}
+
+.register-wrapper {
+  max-width: 28em;
+  margin: 0 auto;
+}
+
+.register-logo {
+  display: block;
+  max-width: 100%;
+  width: 12em;
+  height: auto;
+  margin: 0 auto 1.5em;
+}
+
+h1 {
+  color: var(--rop-fg-bold);
+  font-size: 2.75em;
+  font-weight: bold;
+  line-height: 1.5;
+  margin: 0 0 0.5em 0;
+  position: relative;
+  padding-bottom: 0.35em;
+}
+
+h1::after {
+  background: linear-gradient(to right, var(--rop-accent1), var(--rop-accent3));
+  border-radius: 0.2em;
+  bottom: 0;
+  content: '';
+  height: 0.05em;
+  position: absolute;
+  right: 0;
+  width: 100%;
+}
+
+.party-date {
+  color: var(--rop-fg);
+  font-size: 1rem;
+  margin: 0 0 var(--rop-element-margin) 0;
+}
+
+.party-date strong {
+  color: var(--rop-fg-bold);
+}
+
+form {
+  margin: 0 0 var(--rop-element-margin) 0;
+}
+
+label {
+  color: var(--rop-fg-bold);
+  display: block;
+  font-size: 1.1em;
+  font-weight: bold;
+  line-height: 1.5;
+  margin: 0 0 0.7em 0;
+}
+
+input[type="text"],
+input[type="email"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--rop-border-bg);
+  border: 1px solid var(--rop-border);
+  border-radius: var(--rop-radius);
+  color: inherit;
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+  height: var(--rop-element-height);
+  margin: 0 0 1.25em 0;
+  outline: 0;
+  padding: 0 1em;
+  width: 100%;
+  transition: border-color var(--rop-transition), box-shadow var(--rop-transition);
+}
+
+input::placeholder {
+  color: var(--rop-fg-light);
+  opacity: 1;
+}
+
+input:focus {
+  border-color: var(--rop-fg-bold);
+  box-shadow: 0 0 0 1px var(--rop-fg-bold);
+}
+
+button[type="submit"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--rop-border);
+  border-radius: 3em;
+  color: var(--rop-fg-bold);
+  cursor: pointer;
+  display: inline-block;
+  font-family: inherit;
+  font-size: 0.6em;
+  font-weight: bold;
+  height: calc(4.75em + 2px);
+  letter-spacing: 0.25em;
+  line-height: 4.75em;
+  margin-top: 0.5em;
+  outline: 0;
+  padding: 0 3.75em;
+  text-transform: uppercase;
+  transition: border-color var(--rop-transition), opacity var(--rop-transition);
+  white-space: nowrap;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  border-color: var(--rop-fg);
+}
+
+button[type="submit"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#message {
+  margin-top: var(--rop-element-margin);
+  min-height: 1.5em;
+}
+
+.msg-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid var(--rop-border);
+  border-top-color: var(--rop-fg-bold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#message.msg-success {
+  color: #8dd4a0;
+}
+
+#message.msg-error {
+  color: #e07a8a;
+}
+
+#message.success-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  margin-top: 0;
+  padding: 1.25em 1em;
+  background: var(--rop-border-bg);
+  border: 1px solid var(--rop-border);
+  border-radius: var(--rop-radius);
+  line-height: 1.6;
+}
+
+#message.success-message .success-title {
+  display: block;
+  color: var(--rop-fg-bold);
+  font-size: 1.4em;
+  font-weight: bold;
+}
+
+#message.success-message .success-body {
+  display: block;
+  color: var(--rop-fg);
+  font-size: 1em;
+}
+
+@media (max-width: 480px) {
+  body { font-size: 12pt; }
+  h1 { font-size: 2em; }
+  .register-logo { width: 10em; }
+}

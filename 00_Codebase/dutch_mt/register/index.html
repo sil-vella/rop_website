@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register — Dutch.mt</title>
+  <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+  <div class="register-wrapper">
+    <img src="images/logo_mt.jpg" alt="Dutch.mt" class="register-logo">
+    <div class="form-section">
+      <h1>Register</h1>
+      <p class="party-date">Dutch MT Tournament date: <strong>18th April 2026</strong></p>
+      <form id="register-form">
+        <input type="hidden" name="event_slug" id="event_slug" value="2026-04-18">
+        <input type="hidden" name="event_name" id="event_name" value="18th April 2026">
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" placeholder="Name" required autocomplete="given-name">
+
+        <label for="surname">Surname</label>
+        <input type="text" id="surname" name="surname" placeholder="Surname" required autocomplete="family-name">
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email">
+
+        <button type="submit">Register</button>
+      </form>
+    </div>
+    <p id="message" aria-live="polite"></p>
+  </div>
+  <script>
+    (function () {
+      var form = document.getElementById('register-form');
+      var formSection = document.querySelector('.form-section');
+      var messageEl = document.getElementById('message');
+      var submitBtn = form.querySelector('button[type="submit"]');
+
+      function setMessage(text, isError, showSpinner) {
+        messageEl.innerHTML = '';
+        messageEl.className = isError ? 'msg-error' : 'msg-success';
+        var line = document.createElement('span');
+        line.className = 'msg-line';
+        if (showSpinner) {
+          var spinner = document.createElement('span');
+          spinner.className = 'spinner';
+          spinner.setAttribute('aria-hidden', 'true');
+          line.appendChild(spinner);
+        }
+        line.appendChild(document.createTextNode(text));
+        messageEl.appendChild(line);
+      }
+
+      function showSuccess() {
+        formSection.style.display = 'none';
+        messageEl.className = 'msg-success success-message';
+        messageEl.innerHTML = '<span class="success-title">You\'re registered</span>' +
+          '<span class="success-body">We\'ve sent you a confirmation email — give it a few minutes to arrive. ' +
+          'Please check your inbox and spam folder.</span>';
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        setMessage('Sending…', false, true);
+
+        var body = {
+          name: document.getElementById('name').value.trim(),
+          surname: document.getElementById('surname').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          event_slug: document.getElementById('event_slug').value.trim(),
+          event_name: document.getElementById('event_name').value.trim()
+        };
+
+        var base = (typeof window.DUTCH_MT_API_BASE !== 'undefined' && window.DUTCH_MT_API_BASE) ? window.DUTCH_MT_API_BASE : '';
+        if (!base && typeof window.location !== 'undefined') {
+          var h = window.location.hostname || '';
+          if (h === 'dutch.reignofplay.com' || h === 'dutch.mt' || h.endsWith('.dutch.mt')) {
+            base = 'https://dashboard.reignofplay.com';
+          }
+        }
+        var url = base ? (base.replace(/\/$/, '') + '/api/dutch_mt/register_for_tournament.php') : '/api/dutch_mt/register_for_tournament.php';
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        setTimeout(function () {
+          showSuccess();
+        }, 800);
+      });
+    })();
+  </script>
+</body>
+</html>

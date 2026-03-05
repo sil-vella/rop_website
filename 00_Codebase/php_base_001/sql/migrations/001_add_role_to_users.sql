@@ -4,5 +4,5 @@
 USE dutch_dashboard;
 
 ALTER TABLE users
-  ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'user' AFTER password_hash,
-  ADD INDEX idx_role (role);
+  ADD COLUMN IF NOT EXISTS role VARCHAR(64) NOT NULL DEFAULT 'user' AFTER password_hash,
+  ADD INDEX IF NOT EXISTS idx_role (role);

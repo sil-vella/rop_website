@@ -55,6 +55,16 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 | `api/create-tournament.php` | JWT (verified locally) | Verify JWT in PHP; then POST to Python `/service/dutch/create-tournaments` with service key; return Python response. |
 | `api/health.php` | None | 200 and simple JSON status. |
 | `api/health-python.php` | JWT (verified locally) | Verify JWT in PHP; then GET Python `/service/health` with `X-Service-Key`; return combined status (dashboard + Python). |
+| `api/dutch_mt/register_for_tournament.php` | None (public) | POST username, email, password, password_confirm, optional tournament_id; validated via API registry + public security; returns success + sanitized data (no passwords). |
+
+## API registry and public endpoint security
+
+- **Single source of truth:** `lib/api_registry.php` defines all endpoints (path, allowed methods, auth: `public` | `jwt`). For public endpoints that accept input, `input_rules` define required fields, max/min length, pattern (regex), and filter (e.g. `email`). Add or change endpoints in the registry to keep behaviour consistent.
+- **Public endpoint security:** `lib/public_api_security.php` is used by public endpoints (e.g. `api/dutch_mt/register_for_tournament.php`) to:
+  - Enforce a max request body size (`PUBLIC_API_MAX_BODY_LENGTH`).
+  - Validate and sanitize input using the registry’s `input_rules`: trim, strip tags, remove null bytes and control characters, apply length and pattern.
+  - Reject input containing harmful patterns (e.g. script tags, javascript/vbscript URIs, common SQL keywords, null bytes). On failure, respond with 400 and a generic error message.
+- New public endpoints should load the registry, check method and auth, call `public_api_enforce_body_length()`, then `public_api_filter_input($rawInput, $definition['input_rules'])` before business logic.
 
 ## Contract with Python (reference)
 
@@ -66,6 +76,8 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 ```
 00_Codebase/php_base_001/
 ├── api/
+│   ├── dutch_mt/
+│   │   └── register_for_tournament.php   (public; registry + security)
 │   ├── login.php      (local auth; issues JWT)
 │   ├── refresh.php    (local refresh; no proxy)
 │   ├── register.php   (create dashboard user)
@@ -73,6 +85,8 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 │   ├── health.php
 │   └── health-python.php
 ├── lib/
+│   ├── api_registry.php       (SSOT: path, methods, auth, input_rules)
+│   ├── public_api_security.php (sanitize + filter harmful input for public APIs)
 │   ├── jwt.php        (create + verify JWT)
 │   ├── db.php         (PDO connection for users)
 │   └── python_client.php

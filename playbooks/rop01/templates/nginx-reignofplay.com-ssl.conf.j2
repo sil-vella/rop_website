@@ -1,0 +1,37 @@
+# HTTPS server block for reignofplay.com (apex + www).
+# Ensures https://reignofplay.com serves the main site, not the dashboard.
+# Include this from sites-available/reignofplay.com so it is loaded with that site.
+# Uses same cert as dashboard.reignofplay.com (reignofplay.com cert covers both).
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name reignofplay.com www.reignofplay.com;
+
+    ssl_certificate /etc/letsencrypt/live/reignofplay.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/reignofplay.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    root {{ reignofplay_com_root }};
+    index index.html index.htm;
+
+    access_log /var/log/nginx/reignofplay.com.access.log;
+    error_log /var/log/nginx/reignofplay.com.error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location /downloads/ {
+        alias {{ reignofplay_com_root }}/downloads/;
+        autoindex off;
+        default_type application/octet-stream;
+        add_header Content-Disposition "attachment";
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}

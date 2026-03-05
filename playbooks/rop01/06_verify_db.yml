@@ -1,0 +1,54 @@
+---
+# One-off verification: show DB tables, schema_migrations, and dutch_mt table structures.
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/06_verify_db.yml -e vm_name=rop01
+- name: Verify dutch_dashboard DB state
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    db_name: "dutch_dashboard"
+  tasks:
+    - name: Show tables in dutch_dashboard
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'SHOW TABLES'"
+      register: show_tables
+      changed_when: false
+
+    - name: Show schema_migrations
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'SELECT * FROM schema_migrations ORDER BY applied_at'"
+      register: schema_migrations
+      changed_when: false
+
+    - name: Describe dutch_mt_events
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'DESCRIBE dutch_mt_events'"
+      register: describe_events
+      changed_when: false
+
+    - name: Describe dutch_mt_registrations
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'DESCRIBE dutch_mt_registrations'"
+      register: describe_regs
+      changed_when: false
+
+    - name: Select entries from dutch_mt_events
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'SELECT * FROM dutch_mt_events ORDER BY id'"
+      register: select_events
+      changed_when: false
+
+    - name: Select entries from dutch_mt_registrations
+      command: docker exec rop_website_db sh -c "mariadb -u$MARIADB_USER -p$MARIADB_PASSWORD {{ db_name }} -e 'SELECT * FROM dutch_mt_registrations ORDER BY id'"
+      register: select_regs
+      changed_when: false
+
+    - name: Display verification
+      debug:
+        msg:
+          - "=== SHOW TABLES ==="
+          - "{{ show_tables.stdout_lines }}"
+          - "=== schema_migrations ==="
+          - "{{ schema_migrations.stdout_lines }}"
+          - "=== dutch_mt_events (structure) ==="
+          - "{{ describe_events.stdout_lines }}"
+          - "=== dutch_mt_registrations (structure) ==="
+          - "{{ describe_regs.stdout_lines }}"
+          - "=== dutch_mt_events (entries) ==="
+          - "{{ select_events.stdout_lines }}"
+          - "=== dutch_mt_registrations (entries) ==="
+          - "{{ select_regs.stdout_lines }}"

@@ -1,0 +1,43 @@
+---
+# Sync dutch_mt app from 00_Codebase/dutch_mt to /var/www/dutch.reignofplay.com (dutch.reignofplay.com).
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05b_deploy_dutch_mt.yml -e vm_name=rop01
+- name: Deploy dutch_mt (00_Codebase/dutch_mt → dutch.reignofplay.com docroot)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    dutch_mt_docroot: "/var/www/dutch.reignofplay.com"
+    # Trailing slash: sync contents of dutch_mt only (no dutch_mt/ subdir on server)
+    local_dutch_mt_src: "{{ playbook_dir }}/../../00_Codebase/dutch_mt/"
+  tasks:
+    - name: Ensure dutch.reignofplay.com docroot exists
+      file:
+        path: "{{ dutch_mt_docroot }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Sync dutch_mt contents to docroot (no dutch_mt dir on server)
+      synchronize:
+        src: "{{ local_dutch_mt_src }}"
+        dest: "{{ dutch_mt_docroot }}/"
+        delete: no
+        recursive: true
+
+    - name: Set ownership of docroot to www-data (recursive)
+      file:
+        path: "{{ dutch_mt_docroot }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        recurse: true
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ dutch.reignofplay.com (dutch_mt) content deployed.
+          ============================================
+          Source: {{ local_dutch_mt_src }}
+          Dest:   {{ dutch_mt_docroot }}
+          ============================================

@@ -85,6 +85,23 @@ Verified by SSH to rop01. Use this when checking or deploying web files for reig
 
 ---
 
+## Dutch.mt static pages ↔ API detection and wiring (cross-origin)
+
+Static content for **dutch.reignofplay.com** and **dutch.mt** is deployed by `05b_deploy_dutch_mt.yml` to `/var/www/dutch.reignofplay.com` (e.g. `register/index.html`). Nginx for those domains **does not** proxy `/api/` to the PHP backend; only **dashboard.reignofplay.com** has `location /api/` → PHP (port 8081). So a form on dutch.reignofplay.com or dutch.mt cannot use a same-origin `/api/...` URL — the request would hit the wrong host and fail (e.g. 404 or “Network error”).
+
+**Client-side API base detection (this project):**
+
+- Pages under `00_Codebase/dutch_mt/` (e.g. `register/index.html`) that call the PHP API use the following logic:
+  1. If **`window.DUTCH_MT_API_BASE`** is set (e.g. by a parent page or script), that value is used as the API origin (no trailing slash). Example: `https://dashboard.reignofplay.com`.
+  2. Else, if the current hostname is **`dutch.reignofplay.com`**, **`dutch.mt`**, or **`*.dutch.mt`**, the API base is set to **`https://dashboard.reignofplay.com`** so that API requests are sent there.
+  3. Otherwise (e.g. same-origin when served from dashboard, or localhost), the API base is left empty and requests use a relative path `/api/...`.
+
+- The register form POSTs to `{API_BASE}/api/dutch_mt/register_for_tournament.php`. When the user is on dutch.reignofplay.com or dutch.mt, the request goes to `https://dashboard.reignofplay.com/api/dutch_mt/register_for_tournament.php` (cross-origin). The PHP endpoint sends **`Access-Control-Allow-Origin: *`**, so the browser allows the response.
+
+**Summary:** Dutch.mt static pages detect when they are served from dutch.reignofplay.com or dutch.mt and wire API calls to dashboard.reignofplay.com; no nginx change on the dutch.mt host is required. To override (e.g. local dev or a different backend), set `window.DUTCH_MT_API_BASE` before the form script runs.
+
+---
+
 ## DB migrations (playbook 06)
 
 Migrations update **only** the installed database (new tables, columns, etc.) without touching init.sql or redeploying the stack.
@@ -108,7 +125,9 @@ Migrations update **only** the installed database (new tables, columns, etc.) wi
   - **Dashboard users update** `07_update_dashboard_users.py`: updates `dutch_dashboard.users` from `playbooks/rop01/templates/.update_users` (YAML list under `dashboard_users`). Uses SSH connection from `playbooks/rop01/inventory.ini` ([rop01_user] group: ansible_host, ansible_user, ansible_ssh_private_key_file). Edit `templates/.update_users` with username, email, role, password (plain; hashed via `rop_website_php` on the host). Run from repo root: `python3 playbooks/rop01/07_update_dashboard_users.py`. New users are INSERTed; existing users are UPDATEd only for columns that differ.
   - **Static web deploy** `03_deploy_reignofplay_web.yml`: syncs the contents of local `00_Codebase/html_js_css_base_001` to `/var/www/reignofplay.com` on the VPS. Does not delete existing subdirs (e.g. `downloads/`, `sim_players/`, `sponsors/`); sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/03_deploy_reignofplay_web.yml -e vm_name=rop01`.
   - **Nginx dashboard site** `04_config_nginx.yml`: adds a server block for `dashboard.reignofplay.com` serving from `/var/www/reignofplay.com/dashboard`. Ensures the dashboard docroot exists, deploys the site config, enables it, and reloads nginx. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04_config_nginx.yml -e vm_name=rop01`. For HTTPS, run certbot for `dashboard.reignofplay.com` after the first deploy.
+  - **Reign of Play apex HTTPS** `04b_ensure_reignofplay_com_ssl.yml`: ensures `reignofplay.com` has an HTTPS (443) server block so `https://reignofplay.com` serves the main site (root `/var/www/reignofplay.com`), not the dashboard. Without it, nginx uses the default 443 server (dashboard) for the apex. Deploys a snippet and adds an include to the existing reignofplay.com config. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04b_ensure_reignofplay_com_ssl.yml -e vm_name=rop01`.
   - **Dashboard deploy** `05_deploy_dashboard.yml`: syncs the contents of local `00_Codebase/00_dashboard` to `/var/www/reignofplay.com/dashboard` (dashboard.reignofplay.com). Sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05_deploy_dashboard.yml -e vm_name=rop01`.
+  - **Dutch.mt deploy** `05b_deploy_dutch_mt.yml`: syncs `00_Codebase/dutch_mt` to `/var/www/dutch.reignofplay.com` (dutch.reignofplay.com / dutch.mt). Those pages use client-side API detection to call dashboard.reignofplay.com for `/api/`; see **Dutch.mt static pages ↔ API detection and wiring** above. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05b_deploy_dutch_mt.yml -e vm_name=rop01`.
   - Deploying/configuring the PHP backend on the VPS (e.g. under `/var/www/dutch.reignofplay.com` or a dedicated path; dutch.mt shares that root per `04_setup_nginx.yml`).
   - Nginx (or similar) config **only for the PHP app** — e.g. PHP-FPM, a `location` or include for the dashboard, env — without changing the overall domain/site structure defined in `04_setup_nginx.yml`.
   - Any playbook tasks or vars that are strictly about running and maintaining the company PHP/website stack on the existing rop01 VPS.

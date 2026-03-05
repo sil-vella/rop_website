@@ -1,0 +1,37 @@
+---
+# Ensure reignofplay.com has an HTTPS (443) server block so https://reignofplay.com
+# serves the main site (root /var/www/reignofplay.com), not the dashboard.
+# Without this, nginx uses the default 443 server (dashboard) for reignofplay.com.
+# Deploys a snippet and adds an include to the existing reignofplay.com config.
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04b_ensure_reignofplay_com_ssl.yml -e vm_name=rop01
+- name: Ensure reignofplay.com HTTPS server block
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    reignofplay_com_root: "/var/www/reignofplay.com"
+    reignofplay_com_config: "/etc/nginx/sites-available/reignofplay.com"
+    reignofplay_com_ssl_snippet: "/etc/nginx/sites-available/reignofplay.com-ssl.conf"
+    include_line: "include /etc/nginx/sites-available/reignofplay.com-ssl.conf;"
+  tasks:
+    - name: Deploy reignofplay.com HTTPS snippet
+      template:
+        src: "{{ playbook_dir }}/templates/nginx-reignofplay.com-ssl.conf.j2"
+        dest: "{{ reignofplay_com_ssl_snippet }}"
+        mode: '0644'
+        backup: true
+
+    - name: Include SSL snippet in reignofplay.com config
+      lineinfile:
+        path: "{{ reignofplay_com_config }}"
+        line: "{{ include_line }}"
+        create: no
+        state: present
+
+    - name: Test nginx configuration
+      command: nginx -t
+      changed_when: false
+
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded

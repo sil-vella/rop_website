@@ -6,21 +6,67 @@
   <title>Leaderboard — Dutch.mt Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css">
   <style>
-    body { padding: 1rem 2rem; }
+    /* Dutch.mt theme (from Flutter ThemePreset.dutch) */
+    :root{
+      --primary: #6B9950;   /* ThemeConfig.primaryColor */
+      --accent:  #8BC34A;   /* ThemeConfig.accentColor */
+      --accent2: #AED581;   /* ThemeConfig.accentColor2 */
+      --scaffold:#2E1F2A;   /* ThemeConfig.scaffoldBackgroundColor */
+      --success: #4CAF50;   /* ThemeConfig.successColor */
+      --border: rgba(174, 213, 129, 0.30);
+      --border-strong: rgba(139, 195, 74, 0.45);
+    }
+
+    body { padding: 1rem 2rem; background: var(--scaffold); color: #eee; }
     .leaderboard-container { max-width: 100%; width: 100%; }
-    .leaderboard-container h1 { margin-bottom: 0.25rem; }
-    .leaderboard-container .tournament-name { font-size: 1rem; color: #888; margin-bottom: 1.5rem; }
-    .leaderboard-table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 8px; overflow: hidden; }
-    .leaderboard-table th, .leaderboard-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #333; }
-    .leaderboard-table th { background: #1a1a2e; color: #aaa; font-weight: 600; }
+    .leaderboard-container h1 { margin-bottom: 0.25rem; color: var(--accent2); }
+    .leaderboard-container .tournament-name { font-size: 1rem; color: rgba(174, 213, 129, 0.75); margin-bottom: 1.5rem; }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(107, 153, 80, 0.06);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border-strong);
+    }
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .leaderboard-table th {
+      background: rgba(107, 153, 80, 0.18);
+      color: var(--accent2);
+      font-weight: 700;
+    }
     .leaderboard-table td { color: #eee; }
     .leaderboard-table tr:last-child td { border-bottom: none; }
-    .leaderboard-table .rank { font-weight: 600; color: #eee; width: 4rem; }
-    .leaderboard-table .points, .leaderboard-table .cards { text-align: right; }
-    .no-data { color: #888; padding: 2rem; text-align: center; }
-    .back-link { display: inline-block; margin-bottom: 1rem; color: #0f3460; }
-    .back-link:hover { color: #533483; }
-    .updated-notification { position: fixed; top: 1rem; right: 1rem; padding: 0.75rem 1.25rem; background: #2ecc71; color: #1a1a2e; border-radius: 6px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+
+    .leaderboard-table .rank { font-weight: 700; color: var(--accent2); width: 4rem; }
+    .leaderboard-table .points, .leaderboard-table .cards { text-align: right; color: #eee; }
+
+    .leaderboard-table tbody tr:hover td { background: rgba(174, 213, 129, 0.06); }
+
+    .no-data { color: rgba(174, 213, 129, 0.7); padding: 2rem; text-align: center; }
+    .back-link { display: inline-block; margin-bottom: 1rem; color: var(--accent2); }
+    .back-link:hover { color: var(--accent); }
+
+    .updated-notification {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.75rem 1.25rem;
+      background: var(--success);
+      color: var(--scaffold);
+      border-radius: 8px;
+      font-weight: 700;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
     .updated-notification.visible { opacity: 1; }
   </style>
   <script>window.DUTCH_MT_API_URL = window.DUTCH_MT_API_URL || 'https://dutch.mt';</script>

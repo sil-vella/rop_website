@@ -1,0 +1,41 @@
+---
+# Check RoP website PHP container logs (rop_website_php).
+# Usage: ansible-playbook playbooks/rop01/07_check_php_logs.yml -i playbooks/rop01/inventory.ini -e vm_name=rop01
+# Optional: -e php_log_tail=200  (default 100)
+- name: Check PHP container logs
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    php_container: "rop_website_php"
+    php_log_tail: 100
+  tasks:
+    - name: Get PHP container logs (last {{ php_log_tail }} lines)
+      command:
+        - docker
+        - logs
+        - --tail
+        - "{{ php_log_tail }}"
+        - "{{ php_container }}"
+      register: php_logs
+      changed_when: false
+      failed_when: false
+
+    - name: Display PHP container logs
+      debug:
+        var: php_logs.stdout_lines
+      when: php_logs.stdout_lines is defined and php_logs.stdout_lines | length > 0
+
+    - name: Display PHP container logs (single line)
+      debug:
+        msg: "{{ php_logs.stdout }}"
+      when: (php_logs.stdout_lines is not defined or php_logs.stdout_lines | length == 0) and php_logs.stdout | length > 0
+
+    - name: No log output
+      debug:
+        msg: "(no output)"
+      when: (php_logs.stdout_lines is not defined or php_logs.stdout_lines | length == 0) and (php_logs.stdout is not defined or php_logs.stdout | length == 0)
+
+    - name: Show stderr if present
+      debug:
+        msg: "stderr: {{ php_logs.stderr }}"
+      when: php_logs.stderr is defined and php_logs.stderr | length > 0

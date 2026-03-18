@@ -5,44 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login — Dutch.mt Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css">
-  <!-- Set API base if not set (e.g. sibling dsh_php_base_001 when served from same parent). -->
-  <script>window.DUTCH_DASHBOARD_API_BASE = window.DUTCH_DASHBOARD_API_BASE || '';</script>
+  <!-- VPS production: https://dutch.mt (nginx routes /public/* to Flask). Override with window.DUTCH_MT_API_URL for local/dev. -->
+  <script>window.DUTCH_MT_API_URL = window.DUTCH_MT_API_URL || 'https://dutch.mt';</script>
 </head>
 <body>
   <div class="container">
     <h1>Dutch.mt Dashboard — Login</h1>
     <form id="login-form" class="card">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" required autocomplete="username">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
       <label for="password">Password</label>
       <input type="password" id="password" name="password" required autocomplete="current-password">
       <div id="login-error" class="error" role="alert" aria-live="polite"></div>
       <button type="submit">Sign in</button>
     </form>
   </div>
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
   <script>
     (function () {
       var form = document.getElementById('login-form');
       var errorEl = document.getElementById('login-error');
+      var baseUrl = (window.DUTCH_MT_API_URL || 'https://dutch.mt').replace(/\/$/, '');
+      var loginUrl = baseUrl + '/public/login';
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         errorEl.textContent = '';
-        var username = document.getElementById('username').value.trim();
+        var email = document.getElementById('email').value.trim();
         var password = document.getElementById('password').value;
-        if (!username || !password) {
-          errorEl.textContent = 'Please enter username and password.';
+        if (!email || !password) {
+          errorEl.textContent = 'Please enter email and password.';
           return;
         }
 
-        DutchDashboardAuth.login(username, password)
-          .then(function () {
+        console.log('Login request:', loginUrl);
+        fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password })
+        })
+          .then(function (res) {
+            console.log('Login response:', res.status, res.statusText, res.url);
+            return res.text().then(function (text) {
+              var data = null;
+              try { data = text ? JSON.parse(text) : null; } catch (_) {}
+              console.log('Login response body:', data !== null ? data : text);
+              if (!res.ok) {
+                var err = new Error(data && (data.error || data.message) ? (data.error || data.message) : 'Login failed');
+                err.status = res.status;
+                err.data = data;
+                throw err;
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            var payload = data && data.data ? data.data : data;
+            var accessToken = (data && (data.access_token || data.token)) || (payload && (payload.access_token || payload.token));
+            var refreshToken = (data && data.refresh_token) || (payload && payload.refresh_token);
+            if (accessToken) {
+              try {
+                localStorage.setItem('dutch_dashboard_access_token', accessToken);
+                if (refreshToken) localStorage.setItem('dutch_dashboard_refresh_token', refreshToken);
+              } catch (e) {}
+            }
+            errorEl.textContent = '';
+            errorEl.style.color = 'green';
+            errorEl.textContent = 'Login successful. Redirecting…';
             var next = new URLSearchParams(window.location.search).get('next') || 'index.html';
             window.location.href = next;
           })
           .catch(function (err) {
+            console.log('Login error:', err);
             errorEl.textContent = err.message || 'Login failed.';
           });
       });

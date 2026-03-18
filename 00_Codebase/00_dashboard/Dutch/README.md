@@ -4,7 +4,7 @@ Static frontend for the Dutch.mt Dashboard. Served alongside the company PHP bac
 
 ## Contents
 
-- `index.html` — Dashboard (protected); create-tournament form and logout.
+- `index.html` — Dashboard (protected); tournaments list and logout.
 - `login.html` — Login form; POSTs to `api/login.php`, stores tokens, redirects to index or `?next=...`.
 - `css/dashboard.css` — Base styles.
 - `js/api.js` — API base URL, token storage, fetch with Bearer and 401 → refresh/redirect to login.

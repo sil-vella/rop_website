@@ -70,7 +70,7 @@
 
   /**
    * Fetch with optional auth. On 401, tries refresh once and retries; then redirects to login.
-   * @param {string} path - Path (e.g. '/api/create-tournament.php')
+   * @param {string} path - Path (e.g. '/api/get-tournaments.php')
    * @param {object} options - fetch options (method, body, etc.)
    * @param {boolean} options.auth - If true, add Bearer and handle 401 with refresh
    */

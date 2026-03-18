@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reign of Play — Dashboard</title>
+  <link rel="stylesheet" href="Dutch/css/dashboard.css">
   <style>
     body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
     h1 { margin-bottom: 1.5rem; }
@@ -12,13 +13,55 @@
     a { color: #2563eb; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
+  <script>window.DUTCH_DASHBOARD_API_BASE = window.DUTCH_DASHBOARD_API_BASE || '';</script>
 </head>
 <body>
   <h1>Dashboard</h1>
   <nav>
     <ul>
-      <li><a href="Dutch/">Dutch</a></li>
+      <li><a href="Dutch/index.html">Dutch</a></li>
     </ul>
   </nav>
+
+  <section class="container" style="margin-top: 1.5rem;">
+    <h2>Dashboard login</h2>
+    <form id="login-form" class="card">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+      <div id="login-error" class="error" role="alert" aria-live="polite"></div>
+      <button type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <script src="Dutch/js/api.js"></script>
+  <script src="Dutch/js/auth.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById('login-form');
+      var errorEl = document.getElementById('login-error');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorEl.textContent = '';
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+        if (!username || !password) {
+          errorEl.textContent = 'Please enter username and password.';
+          return;
+        }
+
+        DutchDashboardAuth.login(username, password)
+          .then(function () {
+            var next = new URLSearchParams(window.location.search).get('next') || 'index.html';
+            window.location.href = next;
+          })
+          .catch(function (err) {
+            errorEl.textContent = err.message || 'Login failed.';
+          });
+      });
+    })();
+  </script>
 </body>
 </html>

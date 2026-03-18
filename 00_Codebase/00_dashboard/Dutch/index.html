@@ -6,6 +6,7 @@
   <title>Dutch.mt Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css">
   <script>window.DUTCH_DASHBOARD_API_BASE = window.DUTCH_DASHBOARD_API_BASE || '';</script>
+  <script>window.DUTCH_MT_API_URL = window.DUTCH_MT_API_URL || 'https://dutch.mt';</script>
 </head>
 <body>
   <div class="container">
@@ -21,19 +22,49 @@
       <p class="muted">Content placeholder — integrate your metrics/analytics here.</p>
     </div>
 
-    <div id="section-create-tournament" class="card" style="display: none;" data-roles="admin">
-      <h2>Create tournament</h2>
-      <form id="create-tournament-form">
-        <label for="tournament-name">Name</label>
-        <input type="text" id="tournament-name" name="name" required placeholder="Tournament name">
-        <label for="tournament-desc">Description (optional)</label>
-        <textarea id="tournament-desc" name="description" rows="2" placeholder="Description"></textarea>
-        <div id="tournament-error" class="error" role="alert" aria-live="polite"></div>
-        <div id="tournament-success" class="success" role="status" aria-live="polite"></div>
-        <button type="submit">Create tournament</button>
-      </form>
+    <div id="section-tournaments" class="card">
+      <h2>Tournaments</h2>
+      <p class="muted">Active tournaments only. Draft and other statuses are excluded.</p>
+      <button type="button" class="btn" id="get-tournaments-btn">Get tournaments</button>
+      <div id="tournaments-error" class="error" role="alert" aria-live="polite" style="margin-top: 0.5rem;"></div>
+      <div id="tournaments-list" style="margin-top: 1rem;"></div>
     </div>
   </div>
+
+  <style>
+    .tournament-card { margin-top: 0.75rem; }
+    .tournament-card .card { padding: 1.25rem; }
+    .tournament-card .field { margin: 0.35rem 0; }
+    .tournament-card .field-label { font-weight: 600; color: #aaa; }
+    .tournament-card .field-value { margin-left: 0.25rem; color: #eee; }
+    .tournament-card .id-value { font-family: monospace; font-size: 0.9em; }
+    .tournament-card .add-match-toggle { margin-top: 0.75rem; }
+    .tournament-card .add-match-form { margin-top: 0.75rem; padding: 1rem; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; display: none; }
+    .tournament-card .add-match-form.open { display: block; }
+    .tournament-card .user-ids-scroll { max-height: 160px; overflow-y: auto; border: 1px solid #333; padding: 0.5rem 0.75rem; margin: 0.5rem 0; background: #16213e; border-radius: 4px; color: #eee; }
+    .tournament-card .user-id-row { padding: 0.25rem 0; }
+    .tournament-card .user-id-row label { cursor: pointer; display: block; color: #eee; }
+    .tournament-card .match-select-hint { font-size: 0.9rem; color: #888; margin-bottom: 0.35rem; }
+    .tournament-card .subsection { margin-top: 1rem; padding: 1rem; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; color: #eee; }
+    .tournament-card .subsection h4 { margin: 0 0 0.5rem 0; font-size: 1.05rem; color: #eee; font-weight: 600; }
+    .tournament-card .match-block { margin-top: 0.75rem; padding: 0.75rem 1rem; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #eee; }
+    .tournament-card .match-block .field { margin: 0.25rem 0; font-size: 0.9rem; }
+    .tournament-card .match-block .field-label { color: #aaa; }
+    .tournament-card .match-block .field-value { color: #eee; }
+    .tournament-card .participant-line, .tournament-card .score-line { font-size: 0.9rem; margin: 0.25rem 0; padding-left: 0.5rem; color: #ccc; }
+    .tournament-card .score-line { margin-left: 0.5rem; }
+    .tournament-card .add-match-msg { color: #eee; font-size: 0.9rem; }
+    .tournament-accordion { margin-top: 0.75rem; border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #1a1a2e; }
+    .tournament-accordion .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; background: #16213e; color: #eee; border: none; width: 100%; text-align: left; font-size: 1rem; }
+    .tournament-accordion .accordion-header:hover { background: #1a2a4e; }
+    .tournament-accordion .accordion-header .accordion-title { font-weight: 600; }
+    .tournament-accordion .accordion-header .accordion-id { font-family: monospace; font-size: 0.85em; color: #888; margin-left: 0.5rem; }
+    .tournament-accordion .accordion-header .accordion-chevron { transition: transform 0.2s; color: #888; }
+    .tournament-accordion.open .accordion-header .accordion-chevron { transform: rotate(180deg); }
+    .tournament-accordion .accordion-body { display: none; padding: 1rem 1.25rem; border-top: 1px solid #333; }
+    .tournament-accordion.open .accordion-body { display: block; }
+    .tournament-accordion .accordion-body .leaderboard-btn { margin-bottom: 1rem; }
+  </style>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script>
@@ -50,48 +81,277 @@
       if (DutchDashboardAuth.hasRole(['admin', 'editor'])) {
         document.getElementById('section-metrics').style.display = 'block';
       }
-      if (DutchDashboardAuth.hasRole(['admin'])) {
-        document.getElementById('section-create-tournament').style.display = 'block';
-      }
 
       document.getElementById('logout-btn').addEventListener('click', function () {
         DutchDashboardAuth.logout(true);
       });
 
-      var form = document.getElementById('create-tournament-form');
-      var errorEl = document.getElementById('tournament-error');
-      var successEl = document.getElementById('tournament-success');
+      // Get tournaments: call Python directly with JWT (same pattern as old create-tournament)
+      var baseUrl = (window.DUTCH_MT_API_URL || 'https://dutch.mt').replace(/\/$/, '');
+      var getTournamentsUrl = baseUrl + '/userauth/dutch/get-tournaments';
+      var getTournamentsBtn = document.getElementById('get-tournaments-btn');
+      var tournamentsErrorEl = document.getElementById('tournaments-error');
+      var tournamentsListEl = document.getElementById('tournaments-list');
 
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        errorEl.textContent = '';
-        successEl.textContent = '';
-        var name = document.getElementById('tournament-name').value.trim();
-        var description = document.getElementById('tournament-desc').value.trim();
-        if (!name) {
-          errorEl.textContent = 'Please enter a tournament name.';
-          return;
+      function formatDateTime(isoString) {
+        if (!isoString) return '—';
+        try {
+          var d = new Date(isoString);
+          return d.toISOString().slice(0, 19).replace('T', ' ');
+        } catch (_) {
+          return isoString;
+        }
+      }
+
+      function fieldRow(label, value, opts) {
+        opts = opts || {};
+        var p = document.createElement('div');
+        p.className = 'field';
+        p.innerHTML = '<span class="field-label">' + label + '</span><span class="field-value ' + (opts.mono ? 'id-value' : '') + '">' + (value === '' || value === undefined || value === null ? '—' : value) + '</span>';
+        return p;
+      }
+
+      function buildTournamentCard(t) {
+        var participants = t.participants || [];
+        var userIds = t.user_ids || [];
+        var playerCount = participants.length || userIds.length;
+        var matches = t.matches || [];
+
+        var wrap = document.createElement('div');
+        wrap.className = 'tournament-accordion tournament-card';
+
+        var header = document.createElement('button');
+        header.type = 'button';
+        header.className = 'accordion-header';
+        header.setAttribute('aria-expanded', 'false');
+        var titleSpan = document.createElement('span');
+        titleSpan.className = 'accordion-title';
+        titleSpan.textContent = t.name || 'Tournament';
+        var idSpan = document.createElement('span');
+        idSpan.className = 'accordion-id';
+        idSpan.textContent = t._id || '';
+        var chevron = document.createElement('span');
+        chevron.className = 'accordion-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.textContent = '▼';
+        header.appendChild(titleSpan);
+        header.appendChild(idSpan);
+        header.appendChild(chevron);
+
+        var body = document.createElement('div');
+        body.className = 'accordion-body';
+        body.appendChild(fieldRow('Start date', t.start_date));
+        body.appendChild(fieldRow('Status', t.status));
+        body.appendChild(fieldRow('Players', playerCount === 0 ? 'None' : playerCount + ' player(s)'));
+        body.appendChild(fieldRow('Matches', matches.length === 0 ? 'None' : matches.length + ' match(es)'));
+
+        var leaderboardBtn = document.createElement('button');
+        leaderboardBtn.type = 'button';
+        leaderboardBtn.className = 'btn leaderboard-btn';
+        leaderboardBtn.textContent = 'Show Leaderboard';
+        leaderboardBtn.addEventListener('click', function () {
+          try {
+            localStorage.setItem('leaderboard_tournament', JSON.stringify(t));
+            window.open('leaderboard.html', '_blank', 'noopener');
+          } catch (e) {
+            if (window.alert) window.alert('Could not open leaderboard.');
+          }
+        });
+        body.appendChild(leaderboardBtn);
+
+        var addMatchBtn = document.createElement('button');
+        addMatchBtn.type = 'button';
+        addMatchBtn.className = 'btn add-match-toggle';
+        addMatchBtn.textContent = 'Add match';
+        body.appendChild(addMatchBtn);
+
+        var formWrap = document.createElement('div');
+        formWrap.className = 'add-match-form';
+        formWrap.setAttribute('aria-hidden', 'true');
+        var hint = document.createElement('p');
+        hint.className = 'match-select-hint';
+        hint.textContent = 'Select up to 4 players for this match.';
+        formWrap.appendChild(hint);
+        var scroll = document.createElement('div');
+        scroll.className = 'user-ids-scroll';
+        scroll.setAttribute('role', 'list');
+        if (participants.length > 0) {
+          participants.forEach(function (p, i) {
+            var row = document.createElement('div');
+            row.className = 'user-id-row';
+            var id = 'match-user-' + (t._id || i) + '-' + i;
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.id = id;
+            cb.value = p.user_id;
+            cb.setAttribute('data-max-4', '1');
+            var lab = document.createElement('label');
+            lab.htmlFor = id;
+            lab.appendChild(cb);
+            var labelText = (p.username || p.user_id) + (p.email ? ' (' + p.email + ')' : '');
+            lab.appendChild(document.createTextNode(' ' + labelText));
+            row.appendChild(lab);
+            scroll.appendChild(row);
+          });
+        } else if (userIds.length > 0) {
+          userIds.forEach(function (uid, i) {
+            var row = document.createElement('div');
+            row.className = 'user-id-row';
+            var id = 'match-user-' + (t._id || i) + '-' + i;
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.id = id;
+            cb.value = uid;
+            cb.setAttribute('data-max-4', '1');
+            var lab = document.createElement('label');
+            lab.htmlFor = id;
+            lab.appendChild(cb);
+            lab.appendChild(document.createTextNode(' ' + uid));
+            row.appendChild(lab);
+            scroll.appendChild(row);
+          });
+        } else {
+          scroll.innerHTML = '<p class="muted">No players in this tournament yet.</p>';
+        }
+        formWrap.appendChild(scroll);
+        var addMatchMsg = document.createElement('div');
+        addMatchMsg.className = 'add-match-msg';
+        addMatchMsg.setAttribute('aria-live', 'polite');
+        addMatchMsg.style.marginTop = '0.5rem';
+        addMatchMsg.style.minHeight = '1.25em';
+        formWrap.appendChild(addMatchMsg);
+        var addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn';
+        addBtn.textContent = 'Add';
+        formWrap.appendChild(addBtn);
+
+        addMatchBtn.addEventListener('click', function () {
+          var open = formWrap.classList.toggle('open');
+          formWrap.setAttribute('aria-hidden', open ? 'false' : 'true');
+        });
+
+        function updateAddMatchCheckboxes() {
+          var checkboxes = scroll.querySelectorAll('input[type="checkbox"]');
+          var checked = scroll.querySelectorAll('input[type="checkbox"]:checked');
+          var atLimit = checked.length >= 4;
+          checkboxes.forEach(function (cb) {
+            cb.disabled = atLimit && !cb.checked;
+          });
         }
 
-        var body = { name: name };
-        if (description) body.description = description;
+        addBtn.addEventListener('click', function () {
+          addMatchMsg.textContent = '';
+          addMatchMsg.style.color = '';
+          var checked = scroll.querySelectorAll('input[type="checkbox"]:checked');
+          if (checked.length > 4) {
+            return;
+          }
+          var userIds = [];
+          for (var i = 0; i < checked.length; i++) {
+            userIds.push(checked[i].value);
+          }
+          if (userIds.length === 0) {
+            addMatchMsg.style.color = '#c00';
+            addMatchMsg.textContent = 'Select at least one player.';
+            return;
+          }
+          var token = DutchDashboardApi.getToken();
+          if (!token) {
+            addMatchMsg.style.color = '#c00';
+            addMatchMsg.textContent = 'Not logged in. Please log in again.';
+            return;
+          }
+          addBtn.disabled = true;
+          fetch(baseUrl + '/userauth/dutch/add-tournament-match', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ tournament_id: t._id, user_ids: userIds })
+          })
+            .then(function (res) {
+              return res.text().then(function (text) {
+                var data = null;
+                try { data = text ? JSON.parse(text) : null; } catch (_) {}
+                return { status: res.status, data: data };
+              });
+            })
+            .then(function (out) {
+              addBtn.disabled = false;
+              if (out.status >= 200 && out.status < 300 && out.data && out.data.success !== false) {
+                addMatchMsg.style.color = '#060';
+                addMatchMsg.textContent = 'Match added.';
+                scroll.querySelectorAll('input[type="checkbox"]:checked').forEach(function (cb) { cb.checked = false; });
+                updateAddMatchCheckboxes();
+              } else {
+                addMatchMsg.style.color = '#c00';
+                addMatchMsg.textContent = (out.data && out.data.error) || ('Request failed' + (out.status ? ' (' + out.status + ')' : ''));
+              }
+            })
+            .catch(function (err) {
+              addBtn.disabled = false;
+              addMatchMsg.style.color = '#c00';
+              addMatchMsg.textContent = err.message || 'Request failed.';
+            });
+        });
 
-        DutchDashboardApi.fetch('/api/create-tournament.php', {
-          method: 'POST',
-          auth: true,
-          body: JSON.stringify(body)
+        scroll.addEventListener('change', function () {
+          updateAddMatchCheckboxes();
+        });
+        updateAddMatchCheckboxes();
+
+        body.appendChild(formWrap);
+
+        header.addEventListener('click', function () {
+          var open = wrap.classList.toggle('open');
+          header.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        wrap.appendChild(header);
+        wrap.appendChild(body);
+        return wrap;
+      }
+
+      getTournamentsBtn.addEventListener('click', function () {
+        tournamentsErrorEl.textContent = '';
+        tournamentsListEl.innerHTML = '';
+        var token = DutchDashboardApi.getToken();
+        if (!token) {
+          tournamentsErrorEl.textContent = 'Not logged in. Please log in again.';
+          return;
+        }
+        getTournamentsBtn.disabled = true;
+        fetch(getTournamentsUrl, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
         })
-          .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; }); })
+          .then(function (res) {
+            return res.text().then(function (text) {
+              var data = null;
+              try { data = text ? JSON.parse(text) : null; } catch (_) {}
+              return { status: res.status, data: data };
+            });
+          })
           .then(function (out) {
-            if (out.ok && out.data && out.data.success !== false) {
-              successEl.textContent = 'Tournament created successfully.';
-              form.reset();
+            getTournamentsBtn.disabled = false;
+            if (out.status >= 200 && out.status < 300 && out.data) {
+              var list = out.data.tournaments != null ? out.data.tournaments : (Array.isArray(out.data) ? out.data : []);
+              if (list.length === 0) {
+                tournamentsListEl.innerHTML = '<p class="muted">No active tournaments.</p>';
+              } else {
+                list.forEach(function (t) {
+                  tournamentsListEl.appendChild(buildTournamentCard(t));
+                });
+              }
             } else {
-              errorEl.textContent = (out.data && (out.data.error || out.data.message)) || 'Request failed.';
+              tournamentsErrorEl.textContent = (out.data && out.data.error) || ('Request failed' + (out.status ? ' (' + out.status + ')' : ''));
             }
           })
           .catch(function (err) {
-            errorEl.textContent = err.message || 'Request failed.';
+            getTournamentsBtn.disabled = false;
+            tournamentsErrorEl.textContent = err.message || 'Request failed.';
           });
       });
     })();

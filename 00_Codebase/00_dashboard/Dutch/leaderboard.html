@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leaderboard — Dutch.mt Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <style>
+    body { padding: 1rem 2rem; }
+    .leaderboard-container { max-width: 100%; width: 100%; }
+    .leaderboard-container h1 { margin-bottom: 0.25rem; }
+    .leaderboard-container .tournament-name { font-size: 1rem; color: #888; margin-bottom: 1.5rem; }
+    .leaderboard-table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 8px; overflow: hidden; }
+    .leaderboard-table th, .leaderboard-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #333; }
+    .leaderboard-table th { background: #1a1a2e; color: #aaa; font-weight: 600; }
+    .leaderboard-table td { color: #eee; }
+    .leaderboard-table tr:last-child td { border-bottom: none; }
+    .leaderboard-table .rank { font-weight: 600; color: #eee; width: 4rem; }
+    .leaderboard-table .points, .leaderboard-table .cards { text-align: right; }
+    .no-data { color: #888; padding: 2rem; text-align: center; }
+    .back-link { display: inline-block; margin-bottom: 1rem; color: #0f3460; }
+    .back-link:hover { color: #533483; }
+    .updated-notification { position: fixed; top: 1rem; right: 1rem; padding: 0.75rem 1.25rem; background: #2ecc71; color: #1a1a2e; border-radius: 6px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .updated-notification.visible { opacity: 1; }
+  </style>
+  <script>window.DUTCH_MT_API_URL = window.DUTCH_MT_API_URL || 'https://dutch.mt';</script>
+</head>
+<body>
+  <div id="updated-notification" class="updated-notification" aria-live="polite">Updated</div>
+  <div class="leaderboard-container">
+    <a href="index.html" class="back-link">← Back to Dashboard</a>
+    <h1>Leaderboard</h1>
+    <p id="tournament-name" class="tournament-name"></p>
+    <div id="table-wrap"></div>
+  </div>
+  <script>
+    (function () {
+      var baseUrl = (window.DUTCH_MT_API_URL || 'https://dutch.mt').replace(/\/$/, '');
+      var getTournamentsUrl = baseUrl + '/userauth/dutch/get-tournaments';
+      var tableWrap = document.getElementById('table-wrap');
+      var nameEl = document.getElementById('tournament-name');
+      var notificationEl = document.getElementById('updated-notification');
+      var tournamentId = null;
+
+      function getToken() {
+        try {
+          return localStorage.getItem('dutch_dashboard_access_token') || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function getUsername(participants, userId) {
+        var p = participants.filter(function (x) { return x.user_id === userId; })[0];
+        return (p && p.username) ? p.username : userId;
+      }
+
+      function buildTable(t) {
+        var participants = t.participants || [];
+        var matches = t.matches || [];
+        var byUser = {};
+        matches.forEach(function (m) {
+          var scores = m.scores || [];
+          scores.forEach(function (s) {
+            var uid = s.user_id;
+            if (!byUser[uid]) {
+              byUser[uid] = { user_id: uid, totalPoints: 0, totalCards: 0, matches: 0 };
+            }
+            byUser[uid].totalPoints += (s.total_end_points != null ? Number(s.total_end_points) : 0);
+            byUser[uid].totalCards += (s.end_card_count != null ? Number(s.end_card_count) : 0);
+            byUser[uid].matches += 1;
+          });
+        });
+        var rows = Object.keys(byUser).map(function (uid) { return byUser[uid]; });
+        rows.sort(function (a, b) {
+          if (a.totalPoints !== b.totalPoints) return a.totalPoints - b.totalPoints;
+          return a.totalCards - b.totalCards;
+        });
+
+        if (rows.length === 0) {
+          tableWrap.innerHTML = '<p class="no-data">No match scores yet for this tournament.</p>';
+          return;
+        }
+
+        var table = document.createElement('table');
+        table.className = 'leaderboard-table';
+        table.setAttribute('role', 'table');
+        var thead = document.createElement('thead');
+        var trHead = document.createElement('tr');
+        ['Rank', 'Player', 'Total points', 'Total cards', 'Matches'].forEach(function (text) {
+          var th = document.createElement('th');
+          th.textContent = text;
+          th.setAttribute('scope', 'col');
+          if (text === 'Total points') th.className = 'points';
+          if (text === 'Total cards') th.className = 'cards';
+          trHead.appendChild(th);
+        });
+        thead.appendChild(trHead);
+        table.appendChild(thead);
+        var tbody = document.createElement('tbody');
+        rows.forEach(function (row, index) {
+          var tr = document.createElement('tr');
+          var rank = index + 1;
+          [rank, getUsername(participants, row.user_id), row.totalPoints, row.totalCards, row.matches].forEach(function (val, i) {
+            var td = document.createElement('td');
+            td.textContent = val;
+            if (i === 0) td.className = 'rank';
+            if (i === 2 || i === 3) td.className = i === 2 ? 'points' : 'cards';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        tableWrap.innerHTML = '';
+        tableWrap.appendChild(table);
+      }
+
+      function showUpdatedNotification() {
+        notificationEl.classList.add('visible');
+        setTimeout(function () {
+          notificationEl.classList.remove('visible');
+        }, 2000);
+      }
+
+      function render(t) {
+        nameEl.textContent = t.name || 'Tournament';
+        buildTable(t);
+      }
+
+      function refreshFromApi() {
+        var token = getToken();
+        if (!token) return;
+        fetch(getTournamentsUrl, { method: 'GET', headers: { 'Authorization': 'Bearer ' + token } })
+          .then(function (res) { return res.text().then(function (text) { var d = null; try { d = text ? JSON.parse(text) : null; } catch (_) {} return { status: res.status, data: d }; }); })
+          .then(function (out) {
+            if (out.status >= 200 && out.status < 300 && out.data && tournamentId) {
+              var list = out.data.tournaments != null ? out.data.tournaments : (Array.isArray(out.data) ? out.data : []);
+              var t = list.filter(function (x) { return x._id === tournamentId; })[0];
+              if (t) {
+                try { localStorage.setItem('leaderboard_tournament', JSON.stringify(t)); } catch (e) {}
+                render(t);
+                showUpdatedNotification();
+              }
+            }
+          })
+          .catch(function () {});
+      }
+
+      var raw = null;
+      try {
+        raw = localStorage.getItem('leaderboard_tournament');
+      } catch (e) {}
+      if (!raw) {
+        tableWrap.innerHTML = '<p class="no-data">No tournament data. Open the leaderboard from the dashboard (Show Leaderboard).</p>';
+        return;
+      }
+      var t = null;
+      try {
+        t = JSON.parse(raw);
+      } catch (e) {
+        tableWrap.innerHTML = '<p class="no-data">Invalid tournament data.</p>';
+        return;
+      }
+      tournamentId = t._id || null;
+      render(t);
+
+      setInterval(refreshFromApi, 60000);
+    })();
+  </script>
+</body>
+</html>

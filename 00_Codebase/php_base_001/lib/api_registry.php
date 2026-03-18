@@ -40,10 +40,6 @@ function api_registry_get_all(): array
             'methods' => ['GET'],
             'auth'    => 'jwt',
         ],
-        'create-tournament' => [
-            'methods' => ['POST'],
-            'auth'    => 'jwt',
-        ],
         'dutch_mt/register_for_tournament' => [
             'methods'     => ['POST'],
             'auth'        => 'public',

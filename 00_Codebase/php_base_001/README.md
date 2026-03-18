@@ -1,6 +1,6 @@
 # Reign of Play — PHP Backend (php_base_001)
 
-Company website/backend PHP. Used by the Dutch dashboard and other RoP apps. Auth is local: register and login create/verify users in the dashboard DB and issue JWTs; no proxy to the main app. Python is used only for business (e.g. create-tournaments) with a service key.
+Company website/backend PHP. Used by the Dutch dashboard and other RoP apps. Auth is local: register and login create/verify users in the dashboard DB and issue JWTs; no proxy to the main app. Python is used for business (e.g. get-tournaments) with a service key.
 
 ## PHP requirements and installation
 
@@ -19,7 +19,7 @@ Company website/backend PHP. Used by the Dutch dashboard and other RoP apps. Aut
 
 - **User → Frontend** (e.g. `00_dashboard/Dutch/dsh_html_js_css_base_001`) → **PHP** (`php_base_001`) with `Authorization: Bearer <JWT>`.
 - **PHP** verifies JWT locally (decode + signature with `JWT_SECRET`). No auth call to Python.
-- **PHP → Python** only for business (e.g. create-tournaments) with header `X-Service-Key: DUTCH_MT_DASHBOARD_SERVICE_KEY`.
+- **PHP → Python** for business (e.g. get-tournaments) with header `X-Service-Key: DUTCH_MT_DASHBOARD_SERVICE_KEY`.
 - Company MySQL/MariaDB (e.g. `dutch_dashboard` and other DBs); phpMyAdmin for admin (see below).
 
 ## Environment variables
@@ -52,7 +52,7 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 | `api/register.php` | None | POST username, email, password; create user in DB; returns success/error. |
 | `api/login.php` | None | POST username, password; verify against DB; return access_token and refresh_token (JWT). |
 | `api/refresh.php` | None | POST refresh_token; verify JWT; return new access_token and refresh_token. |
-| `api/create-tournament.php` | JWT (verified locally) | Verify JWT in PHP; then POST to Python `/service/dutch/create-tournaments` with service key; return Python response. |
+| `api/get-tournaments.php` | JWT (verified locally) | Verify JWT in PHP; then GET Python `/service/dutch/get-tournaments` with `X-Service-Key`; return Python response. |
 | `api/health.php` | None | 200 and simple JSON status. |
 | `api/health-python.php` | JWT (verified locally) | Verify JWT in PHP; then GET Python `/service/health` with `X-Service-Key`; return combined status (dashboard + Python). |
 | `api/dutch_mt/register_for_tournament.php` | None (public) | POST username, email, password, password_confirm, optional tournament_id; validated via API registry + public security; returns success + sanitized data (no passwords). |
@@ -69,7 +69,7 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 ## Contract with Python (reference)
 
 - `GET /service/health` — requires `X-Service-Key`. Returns 200 and `{ "success": true, "service": "python-api", "status": "ok" }`.
-- `POST /service/dutch/create-tournaments` — requires `X-Service-Key`; body = tournament payload. PHP verifies JWTs itself; does not call `/service/auth/validate`.
+- `GET /service/dutch/get-tournaments` — requires `X-Service-Key`; returns tournament list. PHP verifies JWTs itself; does not call `/service/auth/validate`.
 
 ## Project layout
 
@@ -81,7 +81,7 @@ Never expose `JWT_SECRET` or `DUTCH_MT_DASHBOARD_SERVICE_KEY` to the frontend.
 │   ├── login.php      (local auth; issues JWT)
 │   ├── refresh.php    (local refresh; no proxy)
 │   ├── register.php   (create dashboard user)
-│   ├── create-tournament.php
+│   ├── get-tournaments.php
 │   ├── health.php
 │   └── health-python.php
 ├── lib/

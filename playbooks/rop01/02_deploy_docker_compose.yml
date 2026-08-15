@@ -19,33 +19,44 @@
         - "{{ data_dir }}/website_mysql"
         - "{{ app_dir }}/00_Codebase/php_base_001/sql"
 
-    - name: Stat local RoP website .env (source for VPS .env.rop_website)
+    - name: Stat local RoP website env file (source for VPS .env.rop_website)
       stat:
-        path: "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
-      register: local_rop_env_stat
+        path: "{{ item }}"
+      register: local_rop_env_stats
       delegate_to: localhost
       run_once: true
       become: false
+      loop:
+        - "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env.rop_website"
+        - "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
 
-    - name: Copy local php_base_001/.env to VPS as .env.rop_website
+    - name: Select local env source for VPS .env.rop_website
+      set_fact:
+        local_rop_env_src: >-
+          {{
+            (local_rop_env_stats.results | selectattr('stat.exists') | map(attribute='item') | list | first)
+            | default('', true)
+          }}
+
+    - name: Copy local php_base_001 env to VPS as .env.rop_website
       copy:
-        src: "{{ playbook_dir }}/../../00_Codebase/php_base_001/.env"
+        src: "{{ local_rop_env_src }}"
         dest: "{{ app_dir }}/.env.rop_website"
         mode: '0640'
         owner: "{{ vps_user }}"
         group: "{{ vps_user }}"
-      when: local_rop_env_stat.stat.exists | default(false)
+      when: local_rop_env_src | length > 0
 
     - name: Stat existing .env.rop_website on VPS (for fallback when local .env missing)
       stat:
         path: "{{ app_dir }}/.env.rop_website"
       register: rop_website_env_stat
-      when: not (local_rop_env_stat.stat.exists | default(false))
+      when: not (local_rop_env_src | default('') | length > 0)
 
     - name: Create .env.rop_website placeholder (only if local .env missing and VPS file missing)
       copy:
         content: |
-          # RoP website PHP + DB. Fill values on VPS or add 00_Codebase/php_base_001/.env locally and re-run.
+          # RoP website PHP + DB. Fill values on VPS or add 00_Codebase/php_base_001/.env.rop_website locally and re-run.
           MARIADB_ROOT_PASSWORD=
           MARIADB_USER=rop_web
           MARIADB_PASSWORD=
@@ -59,7 +70,7 @@
         owner: "{{ vps_user }}"
         group: "{{ vps_user }}"
       when: >-
-        not (local_rop_env_stat.stat.exists | default(false))
+        not (local_rop_env_src | default('') | length > 0)
         and not (rop_website_env_stat.stat.exists | default(false))
 
     - name: Copy RoP website init.sql to VPS (for rop_website_db first-run schema)

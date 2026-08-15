@@ -2,19 +2,25 @@
 <!--
 	Reign of Play – Games brand landing page
 	Adapted from Hyperspace by HTML5 UP (html5up.net)
-	Logos: place rop_logo and Dutch MT logo in images/
+	Logos: place rop_logo and Dutch Card Game logo in images/
 -->
 <html>
 	<head>
 		<title>Reign of Play</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<meta name="description" content="Reign of Play – a games brand. Play Dutch MT and more." />
+		<meta name="description" content="Reign of Play – a games brand. Dutch Card Game, Arcori, Li Ma Tagħmilhiex, and more." />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 		<style>
 			#sidebar .logo { margin-bottom: 1.5em; }
 			#sidebar .brand-logo { max-width: 100%; height: auto; display: block; margin-left: auto; }
+			#contact-message { margin-top: 1em; }
+			#contact-message.msg-success { color: #48c774; }
+			#contact-message.msg-error { color: #ff3860; }
+			#contact-message .success-title { display: block; font-weight: bold; margin-bottom: 0.5em; }
+			#contact-message .success-body { display: block; }
+			#contact-form.hidden { display: none; }
 		</style>
 	</head>
 	<body class="is-preload">
@@ -52,24 +58,37 @@
 				<!-- One: Who we are / Products -->
 					<section id="one" class="wrapper style2 spotlights">
 						<section>
-<a href="dutchmt-card-game.html" class="image"><img src="images/dutch/dutch_game_logo.jpg" alt="Dutch MT" data-position="center center" /></a>
+<a href="dutchmt-card-game.html" class="image"><img src="images/dutch/dutch_game_logo.jpg" alt="Dutch Card Game" data-position="center center" /></a>
 								<div class="content">
 								<div class="inner">
-									<h2>Dutch MT</h2>
-									<p>Our flagship <strong>online</strong> card game. Clear your hand or finish with the least points. Queens peek, Jacks swap. Play at dutch.reignofplay.com.</p>
+									<h2>Dutch Card Game</h2>
+									<p>Our flagship card game. Clear your hand or finish with the least points. Queens peek, Jacks swap.</p>
 									<ul class="actions">
-										<li><a href="https://dutch.reignofplay.com" class="button primary icon solid fa-external-link-alt" target="_blank" rel="noopener noreferrer">Play online</a></li>
-										<li><a href="dutchmt-card-game.html" class="button">Learn more</a></li>
+										<li><a href="https://apps.apple.com/us/app/dutch-card-game/id6772967073" class="button primary icon brands fa-apple" target="_blank" rel="noopener noreferrer">App Store</a></li>
+										<li><a href="https://play.google.com/store/apps/details?id=com.reignofplay.dutch" class="button icon brands fa-google-play" target="_blank" rel="noopener noreferrer">Google Play</a></li>
+										<li><a href="dutchmt-card-game.html" class="button">Overview</a></li>
 									</ul>
 								</div>
 							</div>
 						</section>
 						<section>
-							<a href="#" class="image"><img src="images/li_ma_taghmilihiex/003.png" alt="Li Ma Taghmilhiex" data-position="center center" /></a>
+							<a href="arcori.html" class="image"><img src="images/arcori/arcori_logo.jpg" alt="Arcori" data-position="center center" /></a>
+							<div class="content">
+								<div class="inner">
+									<h2>Arcori</h2>
+									<p>Beyond the edge of memory lies Velora. Discover Arcori, preserve Legacies, and shape Chronicles as one of the Avari.</p>
+									<ul class="actions">
+										<li><a href="arcori.html" class="button">Learn more</a></li>
+									</ul>
+								</div>
+							</div>
+						</section>
+						<section>
+							<a href="li-ma-taghmilhiex.html" class="image"><img src="images/li_ma_taghmilihiex/003.png" alt="Li Ma Taghmilhiex" data-position="center center" /></a>
 							<div class="content">
 								<div class="inner">
 									<h2>Li Ma Taghmilhiex</h2>
-									<p>A Reign of Play game.</p>
+									<p>Physical Maltese party card game — dares, questions, and challenges. More details coming soon.</p>
 									<ul class="actions">
 										<li><a href="li-ma-taghmilhiex.html" class="button">Learn more</a></li>
 									</ul>
@@ -87,12 +106,12 @@
 								<section>
 									<span class="icon solid major fa-th-large"></span>
 									<h3>Card games</h3>
-									<p>Our Dutch MT and other card titles—clear rules, great replay.</p>
+									<p>Our Dutch Card Game and other card titles—clear rules, great replay.</p>
 								</section>
 								<section>
 									<span class="icon solid major fa-users"></span>
 									<h3>Multiplayer</h3>
-									<p>Games built for groups. Play in person or connect online.</p>
+									<p>Games built for groups. Play in person or on mobile.</p>
 								</section>
 								<section>
 									<span class="icon solid major fa-heart"></span>
@@ -128,26 +147,27 @@
 							<h2>Get in touch</h2>
 							<p>Questions about our games, partnerships, or just want to say hi? Get in touch.</p>
 							<div class="split style1">
-								<section>
-									<form method="post" action="#">
+								<section class="contact-form-section">
+									<form id="contact-form" data-source="ROP" data-recipient="admin@reignofplay.com">
 										<div class="fields">
 											<div class="field half">
 												<label for="name">Name</label>
-												<input type="text" name="name" id="name" />
+												<input type="text" name="name" id="name" required autocomplete="name" />
 											</div>
 											<div class="field half">
 												<label for="email">Email</label>
-												<input type="text" name="email" id="email" />
+												<input type="email" name="email" id="email" required autocomplete="email" />
 											</div>
 											<div class="field">
 												<label for="message">Message</label>
-												<textarea name="message" id="message" rows="5"></textarea>
+												<textarea name="message" id="message" rows="5" required minlength="10"></textarea>
 											</div>
 										</div>
 										<ul class="actions">
-											<li><a href="" class="button submit">Send Message</a></li>
+											<li><button type="submit" class="button">Send Message</button></li>
 										</ul>
 									</form>
+									<p id="contact-message" aria-live="polite"></p>
 								</section>
 								<section>
 									<ul class="contact">
@@ -156,16 +176,10 @@
 											<span>Games brand</span>
 										</li>
 										<li>
-											<h3>Email</h3>
-											<a href="#">hello@reignofplay.example</a>
-										</li>
-										<li>
 											<h3>Social</h3>
 											<ul class="icons">
-												<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-												<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-												<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-												<li><a href="#" class="icon brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+												<li><a href="https://www.facebook.com/reignofplaygames/" class="icon brands fa-facebook-f" target="_blank" rel="noopener noreferrer"><span class="label">Facebook</span></a></li>
+												<li><a href="https://www.youtube.com/@reignofplay7553" class="icon brands fa-youtube" target="_blank" rel="noopener noreferrer"><span class="label">YouTube</span></a></li>
 											</ul>
 										</li>
 									</ul>
@@ -179,9 +193,11 @@
 		<!-- Footer -->
 			<footer id="footer" class="wrapper style1-alt">
 				<div class="inner">
+					<div class="footer-brand-wrap">
+						<a href="https://mixta.mt" target="_blank" rel="noopener noreferrer"><img src="images/mixta/banner.jpg" alt="" class="footer-brand-img" /></a>
+					</div>
 					<ul class="menu">
 						<li>&copy; Reign of Play. All rights reserved.</li>
-						<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
 					</ul>
 				</div>
 			</footer>
@@ -194,6 +210,79 @@
 			<script src="assets/js/breakpoints.min.js"></script>
 			<script src="assets/js/util.js"></script>
 			<script src="assets/js/main.js"></script>
+			<script>
+				(function () {
+					var form = document.getElementById('contact-form');
+					if (!form) return;
+
+					var messageEl = document.getElementById('contact-message');
+					var submitBtn = form.querySelector('button[type="submit"]');
+
+					function setMessage(text, isError) {
+						messageEl.textContent = text;
+						messageEl.className = isError ? 'msg-error' : 'msg-success';
+					}
+
+					function showSuccess() {
+						form.classList.add('hidden');
+						messageEl.className = 'msg-success';
+						messageEl.innerHTML = '<span class="success-title">Message sent</span>' +
+							'<span class="success-body">Thanks for getting in touch — we\'ll reply as soon as we can.</span>';
+					}
+
+					function resolveApiUrl() {
+						var base = (typeof window.ROP_API_BASE !== 'undefined' && window.ROP_API_BASE) ? window.ROP_API_BASE : '';
+						if (!base && typeof window.location !== 'undefined') {
+							var h = window.location.hostname || '';
+							if (h === 'reignofplay.com' || h === 'www.reignofplay.com') {
+								base = 'https://dashboard.reignofplay.com';
+							}
+						}
+						return base ? (base.replace(/\/$/, '') + '/api/contact.php') : '/api/contact.php';
+					}
+
+					form.addEventListener('submit', function (e) {
+						e.preventDefault();
+						submitBtn.disabled = true;
+						setMessage('Sending…', false);
+
+						var body = {
+							name: document.getElementById('name').value.trim(),
+							email: document.getElementById('email').value.trim(),
+							message: document.getElementById('message').value.trim(),
+							source: form.getAttribute('data-source') || 'ROP'
+						};
+						var recipient = (form.getAttribute('data-recipient') || '').trim();
+						if (recipient) {
+							body.recipient = recipient;
+						}
+
+						fetch(resolveApiUrl(), {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(body)
+						})
+							.then(function (res) {
+								return res.json().then(function (data) {
+									return { ok: res.ok, data: data };
+								});
+							})
+							.then(function (result) {
+								if (result.ok && result.data && result.data.success) {
+									showSuccess();
+									return;
+								}
+								var err = (result.data && result.data.error) ? result.data.error : 'Send failed. Please try again.';
+								setMessage(err, true);
+								submitBtn.disabled = false;
+							})
+							.catch(function () {
+								setMessage('Network error. Please try again.', true);
+								submitBtn.disabled = false;
+							});
+					});
+				})();
+			</script>
 
 	</body>
 </html>

@@ -20,11 +20,32 @@ const PUBLIC_API_HARMFUL_PATTERNS = [
 ];
 
 /**
+ * CORS headers for public API endpoints (cross-origin from reignofplay.com, dutch.mt, etc.).
+ */
+function public_api_send_cors_headers(): void
+{
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+/**
  * Send 400 JSON error and exit.
  */
 function public_api_security_fail(string $error): void
 {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    error_log(sprintf(
+        'public_api_security_fail: %s | origin=%s | referer=%s | method=%s | uri=%s',
+        $error,
+        $origin,
+        $referer,
+        $_SERVER['REQUEST_METHOD'] ?? '',
+        $_SERVER['REQUEST_URI'] ?? ''
+    ));
     header('Content-Type: application/json; charset=utf-8');
+    public_api_send_cors_headers();
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => $error]);
     exit;
@@ -37,12 +58,17 @@ function public_api_security_fail(string $error): void
  * @param int $maxLength Max length (default 1024)
  * @return string Sanitized value
  */
-function public_api_sanitize_string(string $value, int $maxLength = 1024): string
+function public_api_sanitize_string(string $value, int $maxLength = 1024, bool $preserveNewlines = false): string
 {
     $value = trim($value);
     $value = strip_tags($value);
-    $value = str_replace(["\0", "\r", "\n"], '', $value);
-    $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+    if ($preserveNewlines) {
+        $value = str_replace(["\0", "\r"], '', $value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+    } else {
+        $value = str_replace(["\0", "\r", "\n"], '', $value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+    }
     if (strlen($value) > $maxLength) {
         $value = substr($value, 0, $maxLength);
     }
@@ -94,7 +120,8 @@ function public_api_filter_input(array $input, array $inputRules): array
         $value = trim((string) $raw);
 
         $maxLength = $rules['max_length'] ?? 1024;
-        $value = public_api_sanitize_string($value, $maxLength);
+        $preserveNewlines = !empty($rules['multiline']);
+        $value = public_api_sanitize_string($value, $maxLength, $preserveNewlines);
 
         if (isset($rules['min_length']) && strlen($value) < $rules['min_length']) {
             public_api_security_fail('Field ' . $key . ' is too short');
@@ -112,7 +139,9 @@ function public_api_filter_input(array $input, array $inputRules): array
             }
         }
 
-        public_api_reject_harmful($value, $key);
+        if (empty($rules['skip_harmful'])) {
+            public_api_reject_harmful($value, $key);
+        }
 
         $out[$key] = $value;
     }
@@ -129,6 +158,7 @@ function public_api_enforce_body_length(): void
     $len = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
     if ($len > PUBLIC_API_MAX_BODY_LENGTH) {
         header('Content-Type: application/json; charset=utf-8');
+        public_api_send_cors_headers();
         http_response_code(413);
         echo json_encode(['success' => false, 'error' => 'Request too large']);
         exit;

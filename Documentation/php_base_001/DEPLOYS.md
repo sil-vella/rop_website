@@ -1,6 +1,8 @@
 # php_base_001 — Deploys and codebase uploads
 
-This document describes how the PHP backend and related code reach the **rop01 VPS**: Docker image build/push, docker-compose deploy, static site syncs, nginx, and DB migrations. All playbooks are under **playbooks/rop01/** and are run from the **app_dev** repo root with Ansible inventory `playbooks/rop01/inventory.ini` and `vm_name=rop01`.
+This document describes how the PHP backend and related code reach the **rop01 VPS**: Docker image build/push, docker-compose deploy, static site syncs, and DB migrations. All playbooks are under **playbooks/rop01/** and are run from the **app_dev** repo root with Ansible inventory `playbooks/rop01/inventory.ini` and `vm_name=rop01`.
+
+**Nginx is not managed in this repo.** Server nginx is configured in the other project.
 
 ---
 
@@ -43,7 +45,7 @@ The **PHP application code** (php_base_001 API, lib, config, and dashboard front
 
 ## 3. Static sites and docroots (separate from PHP container)
 
-These playbooks sync **static files** to nginx docroots. They do **not** change the PHP container or the image.
+These playbooks sync **static files** to web docroots on the VPS. They do **not** change the PHP container, the image, or nginx configuration.
 
 | Playbook | Source (local) | Destination (VPS) | Served at |
 |----------|----------------|-------------------|-----------|
@@ -52,8 +54,8 @@ These playbooks sync **static files** to nginx docroots. They do **not** change 
 | **05b_deploy_dutch_mt.yml** | `00_Codebase/dutch_mt/` | `/var/www/dutch.reignofplay.com/` | dutch.reignofplay.com, dutch.mt |
 
 - **03:** Syncs main site; does not delete existing subdirs (e.g. downloads/, sim_players/, sponsors/). Sets ownership to www-data.
-- **05:** Dashboard static (HTML/JS/CSS). Nginx serves this and proxies `/api/` to 127.0.0.1:8081 (PHP container).
-- **05b:** Dutch.mt static (e.g. register form). No `/api/` on this host; frontend uses API base `https://dashboard.reignofplay.com` when on dutch.reignofplay.com or dutch.mt.
+- **05:** Dashboard static (HTML/JS/CSS). Served at dashboard.reignofplay.com (nginx on the server, configured elsewhere).
+- **05b:** Dutch.mt static (e.g. register form). Frontend uses API base `https://dashboard.reignofplay.com` when on dutch.reignofplay.com or dutch.mt.
 
 **Run examples:**
 
@@ -65,10 +67,12 @@ ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05b_deploy_dut
 
 ---
 
-## 4. Nginx and PHP routing
+## 4. API routing (server nginx — other project)
 
-- **dashboard.reignofplay.com** is configured by playbook **04_config_nginx.yml** (separate from this doc). It serves static from `/var/www/reignofplay.com/dashboard` and proxies **`/api/`** to **http://127.0.0.1:8081** (PHP container). So the public API base URL is `https://dashboard.reignofplay.com`.
-- **dutch.reignofplay.com** and **dutch.mt** do **not** proxy `/api/`; they only serve static from `/var/www/dutch.reignofplay.com`. Dutch.mt pages that need the API call dashboard.reignofplay.com (client-side).
+- **dashboard.reignofplay.com** serves static from `/var/www/reignofplay.com/dashboard` and proxies **`/api/`** to **http://127.0.0.1:8081** (PHP container). Public API base URL: `https://dashboard.reignofplay.com`.
+- **dutch.reignofplay.com** and **dutch.mt** serve static only; pages that need the API call dashboard.reignofplay.com (client-side).
+
+Nginx changes are made in the **other** project — not in this repo.
 
 ---
 
@@ -88,9 +92,8 @@ ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05b_deploy_dut
 |-------|--------|------|
 | 1 | **01_build_and_push_php_docker.py** | After changing php_base_001 (api/lib/config) or dashboard files that are in the image. |
 | 2 | **02_deploy_docker_compose.yml** | Deploy/update stack (compose, .env, init.sql, pull image, start containers). |
-| 3 | **04_config_nginx.yml** | Once per site setup (dashboard nginx + /api/ proxy). |
-| 4 | **03 / 05 / 05b** | After changing static content for reignofplay.com, dashboard static, or dutch_mt. |
-| 5 | **06_run_db_migrations.yml** | After adding/changing `sql/migrations/*.sql`. |
+| 3 | **03 / 05 / 05b** | After changing static content for reignofplay.com, dashboard static, or dutch_mt. |
+| 4 | **06_run_db_migrations.yml** | After adding/changing `sql/migrations/*.sql`. |
 
 ---
 

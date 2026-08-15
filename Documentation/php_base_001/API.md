@@ -11,8 +11,9 @@
 | `api/health-python.php` | GET | JWT | Verify JWT, then GET Python `/service/health` with service key; return combined status. |
 | `api/create-tournament.php` | POST | JWT | Verify JWT, POST body to Python `/service/dutch/create-tournaments` with service key. |
 | `api/dutch_mt/register_for_tournament.php` | POST | None (public) | Tournament registration form: username, email, password, password_confirm, optional tournament_id. Validated via API registry + public security; returns sanitized data (no passwords). |
+| `api/inquiry.php` (`api/contact.php` alias) | POST | None (public) | Site contact form: name, email, message; optional `source` (`ROP`\|`Dutch`\|`Portfolio`) and `platform` (`iOS`\|`Android`). Sends mail via SMTP after responding. See [MAIL_SMTP.md](MAIL_SMTP.md). |
 
-All responses are JSON. Public endpoints send `Access-Control-Allow-Origin: *` for cross-origin use (e.g. forms on dutch.reignofplay.com calling dashboard.reignofplay.com).
+All responses are JSON. Public endpoints send `Access-Control-Allow-Origin: *` for cross-origin use (e.g. forms on dutch.reignofplay.com or portfolio.reignofplay.com calling dashboard.reignofplay.com). There is **no HTTP Origin allowlist**; site tagging is the JSON `source` field — see [MAIL_SMTP.md](MAIL_SMTP.md#cors-cross-origin).
 
 ---
 

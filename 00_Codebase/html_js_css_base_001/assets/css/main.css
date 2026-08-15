@@ -2613,6 +2613,72 @@ input, select, textarea {
 				width: 100%;
 			}
 
+	/* Game detail pages — shared image sizing */
+	#main .inner > .image.fit.scene,
+	#main .inner > .game-gallery {
+		max-width: 42rem;
+		width: 100%;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	#main .inner > .image.fit.banner {
+		display: block;
+		width: 100%;
+		max-width: none;
+		max-height: 440px;
+		overflow: hidden;
+		margin-left: 0;
+		margin-right: 0;
+	}
+
+		#main .inner > .image.fit.banner img {
+			width: 100%;
+			max-height: 440px;
+			object-fit: cover;
+			display: block;
+		}
+
+	#main .inner > .image.fit.banner.banner-wide {
+		max-height: none;
+		overflow: visible;
+		background: #1a1a1a;
+	}
+
+		#main .inner > .image.fit.banner.banner-wide img {
+			max-height: none;
+			height: auto;
+			object-fit: contain;
+		}
+
+	#main .inner > .image.fit.scene {
+		display: block;
+		margin-bottom: 2em;
+		background: #1a1a1a;
+	}
+
+		#main .inner > .image.fit.scene img {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+
+	#main .inner > .game-gallery {
+		margin-bottom: 2em;
+	}
+
+		#main .inner > .game-gallery .image.fit {
+			margin: 0 0 1.5em 0;
+			background: #1a1a1a;
+		}
+
+		#main .inner > .game-gallery .image.fit img {
+			width: 100%;
+			max-height: 280px;
+			object-fit: contain;
+			display: block;
+		}
+
 /* List */
 
 	ol {
@@ -3514,6 +3580,30 @@ input, select, textarea {
 	#footer > .inner .menu {
 		font-size: 0.8em;
 		color: rgba(255, 255, 255, 0.15);
+	}
+
+	#footer .footer-brand-wrap {
+		text-align: center;
+		margin-bottom: 1.5em;
+	}
+
+	#footer .footer-brand-wrap a {
+		border-bottom: none;
+		display: inline-block;
+		max-width: 100%;
+	}
+
+		#footer .footer-brand-wrap a:hover {
+			border-bottom: none;
+		}
+
+	#footer .footer-brand-img {
+		display: block;
+		margin-left: auto;
+		margin-right: auto;
+		max-width: 100%;
+		width: auto;
+		height: auto;
 	}
 
 	#header + #wrapper + #footer > .inner {

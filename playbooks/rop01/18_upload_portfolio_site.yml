@@ -1,0 +1,50 @@
+---
+# Sync portfolio PHP site from 00_Codebase/portfolio to portfolio.reignofplay.com docroot.
+# Preserves other files already on the server (delete: no).
+# Does NOT configure nginx/SSL — that belongs to the other project.
+#
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/18_upload_portfolio_site.yml -e vm_name=rop01
+- name: Deploy portfolio site (00_Codebase/portfolio → portfolio.reignofplay.com)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    portfolio_docroot: "/var/www/portfolio.reignofplay.com"
+    local_portfolio_src: "{{ playbook_dir }}/../../00_Codebase/portfolio/"
+  tasks:
+    - name: Ensure portfolio.reignofplay.com docroot exists
+      file:
+        path: "{{ portfolio_docroot }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Sync portfolio contents to docroot (no delete)
+      synchronize:
+        src: "{{ local_portfolio_src }}"
+        dest: "{{ portfolio_docroot }}/"
+        delete: no
+        recursive: true
+
+    - name: Set ownership of docroot to www-data (recursive)
+      file:
+        path: "{{ portfolio_docroot }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        recurse: true
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ Portfolio site files deployed.
+          ============================================
+          Source: {{ local_portfolio_src }}
+          Dest:   {{ portfolio_docroot }}
+          Note: nginx/SSL for portfolio.reignofplay.com
+                must be set up in the other project.
+          Note: host has no php-fpm; .php pages need a
+                PHP runtime (container or FPM) to execute.
+          Contact form can still call dashboard API.
+          ============================================

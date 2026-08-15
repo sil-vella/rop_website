@@ -5,6 +5,10 @@
 		}
 	],
 	"settings": {
-		"workbench.editor.enablePreview": false
+		"workbench.editor.enablePreview": false,
+		"files.associations": {
+			"**/php_base_001/.env": "dotenv",
+			"**/php_base_001/.env.*": "dotenv"
+		}
 	}
 }

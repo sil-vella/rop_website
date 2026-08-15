@@ -40,6 +40,44 @@ function api_registry_get_all(): array
             'methods' => ['GET'],
             'auth'    => 'jwt',
         ],
+        'inquiry' => [
+            'methods'     => ['POST'],
+            'auth'        => 'public',
+            'input_rules' => [
+                'name' => [
+                    'required'   => true,
+                    'max_length' => 255,
+                    'pattern'    => '/^[\p{L}\s\-\'.]+$/u',
+                ],
+                'email' => [
+                    'required'   => true,
+                    'max_length' => 255,
+                    'filter'     => 'email',
+                ],
+                'message' => [
+                    'required'      => true,
+                    'min_length'    => 10,
+                    'max_length'    => 3000,
+                    'multiline'     => true,
+                    'skip_harmful'  => true,
+                ],
+                'source' => [
+                    'required'   => false,
+                    'max_length' => 16,
+                    'pattern'    => '/^(ROP|Dutch|Portfolio)$/',
+                ],
+                'recipient' => [
+                    'required'   => false,
+                    'max_length' => 255,
+                    'filter'     => 'email',
+                ],
+                'platform' => [
+                    'required'   => false,
+                    'max_length' => 16,
+                    'pattern'    => '/^(iOS|Android)$/',
+                ],
+            ],
+        ],
         'dutch_mt/register_for_tournament' => [
             'methods'     => ['POST'],
             'auth'        => 'public',

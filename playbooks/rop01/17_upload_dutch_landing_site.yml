@@ -1,0 +1,44 @@
+---
+# Sync Dutch static landing from 00_Codebase/dutch to dutch.reignofplay.com docroot.
+# Preserves other docroot dirs (downloads/, app_media/, sim_players/, etc.).
+# Run: ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/17_upload_dutch_landing_site.yml -e vm_name=rop01
+- name: Deploy Dutch landing site (00_Codebase/dutch → dutch.reignofplay.com)
+  hosts: "{{ vm_name }}_user"
+  become: true
+  vars:
+    dutch_docroot: "/var/www/dutch.reignofplay.com"
+    local_dutch_src: "{{ playbook_dir }}/../../00_Codebase/dutch/"
+  tasks:
+    - name: Ensure dutch.reignofplay.com docroot exists
+      file:
+        path: "{{ dutch_docroot }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Sync dutch landing contents to docroot (no delete)
+      synchronize:
+        src: "{{ local_dutch_src }}"
+        dest: "{{ dutch_docroot }}/"
+        delete: no
+        recursive: true
+
+    - name: Set ownership of docroot to www-data (recursive)
+      file:
+        path: "{{ dutch_docroot }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        recurse: true
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ============================================
+          ✓ Dutch landing site deployed.
+          ============================================
+          Source: {{ local_dutch_src }}
+          Dest:   {{ dutch_docroot }}
+          Contact form: /dutch_contact/
+          ============================================

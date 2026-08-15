@@ -24,7 +24,7 @@ The **single PHP backend** (php_base_001) and **single MariaDB database** (dutch
 | [DOCKER.md](DOCKER.md) | Dockerfile, image build and push, docker-compose stack (PHP + MariaDB), container layout. |
 | [DEPLOYS.md](DEPLOYS.md) | Playbooks and codebase uploads: what gets deployed where, order of operations, VPS paths. |
 | [ENVIRONMENT.md](ENVIRONMENT.md) | Environment variables, `.env`, `config.php`, and VPS env handling. |
-| [MAIL_SMTP.md](MAIL_SMTP.md) | Gmail (or other) SMTP for sending mail: App Passwords, env vars, and how it’s wired in PHP. |
+| [MAIL_SMTP.md](MAIL_SMTP.md) | Mailing system: Zoho/SMTP env, contact API (`inquiry`/`contact`), `source` tags (ROP/Dutch/Portfolio), CORS (`*`, no Origin allowlist), debugging. |
 
 **Database:** The PHP backend uses the **dutch_dashboard** MariaDB database (container `rop_website_db`). For schema, PHP↔DB relationship, and container/deploy details, see **[../database/README.md](../database/README.md)**.
 

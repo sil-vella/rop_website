@@ -68,12 +68,28 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.25);
     }
     .updated-notification.visible { opacity: 1; }
+    .leaderboard-logo-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .leaderboard-logo {
+      max-width: 150px;
+      width: auto;
+      height: auto;
+      display: block;
+    }
   </style>
   <script>window.DUTCH_MT_API_URL = window.DUTCH_MT_API_URL || 'https://dutch.mt';</script>
 </head>
 <body>
   <div id="updated-notification" class="updated-notification" aria-live="polite">Updated</div>
   <div class="leaderboard-container">
+    <div class="leaderboard-logo-wrap">
+      <img src="images/logo_mt(no-back).png" alt="Dutch MT" class="leaderboard-logo" />
+    </div>
     <a href="index.html" class="back-link">← Back to Dashboard</a>
     <h1>Leaderboard</h1>
     <p id="tournament-name" class="tournament-name"></p>
@@ -82,19 +98,11 @@
   <script>
     (function () {
       var baseUrl = (window.DUTCH_MT_API_URL || 'https://dutch.mt').replace(/\/$/, '');
-      var getTournamentsUrl = baseUrl + '/userauth/dutch/get-tournaments';
+      var getTournamentsUrl = baseUrl + '/public/dutch/get-tournaments';
       var tableWrap = document.getElementById('table-wrap');
       var nameEl = document.getElementById('tournament-name');
       var notificationEl = document.getElementById('updated-notification');
       var tournamentId = null;
-
-      function getToken() {
-        try {
-          return localStorage.getItem('dutch_dashboard_access_token') || '';
-        } catch (e) {
-          return '';
-        }
-      }
 
       function getUsername(participants, userId) {
         var p = participants.filter(function (x) { return x.user_id === userId; })[0];
@@ -174,13 +182,12 @@
       }
 
       function refreshFromApi() {
-        var token = getToken();
-        if (!token) return;
-        fetch(getTournamentsUrl, { method: 'GET', headers: { 'Authorization': 'Bearer ' + token } })
+        if (!tournamentId) return;
+        fetch(getTournamentsUrl, { method: 'GET' })
           .then(function (res) { return res.text().then(function (text) { var d = null; try { d = text ? JSON.parse(text) : null; } catch (_) {} return { status: res.status, data: d }; }); })
           .then(function (out) {
-            if (out.status >= 200 && out.status < 300 && out.data && tournamentId) {
-              var list = out.data.tournaments != null ? out.data.tournaments : (Array.isArray(out.data) ? out.data : []);
+            if (out.status >= 200 && out.status < 300 && out.data && out.data.success && Array.isArray(out.data.tournaments) && tournamentId) {
+              var list = out.data.tournaments;
               var t = list.filter(function (x) { return x._id === tournamentId; })[0];
               if (t) {
                 try { localStorage.setItem('leaderboard_tournament', JSON.stringify(t)); } catch (e) {}

@@ -11,7 +11,7 @@ services:
     environment:
       - MARIADB_DATABASE=dutch_dashboard
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - /opt/apps/reignofplay/rop_website/data/website_mysql:/var/lib/mysql
       - ./00_Codebase/php_base_001/sql/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
@@ -30,7 +30,7 @@ services:
     env_file:
       - .env.rop_website
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     environment:
       - DB_HOST=rop_website_db
       - DB_NAME=dutch_dashboard

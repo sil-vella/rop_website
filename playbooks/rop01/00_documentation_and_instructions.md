@@ -4,6 +4,8 @@ Reference for the **app_dev** agent when working in `playbooks/rop01/`. Setups a
 
 **Note:** The PHP backend and SQL DB on the VPS are the **general Reign of Play company website/backend/DB**, not Dutch-dashboard-only. The Dutch dashboard is one application within that stack. Services `rop_website_php` and `rop_website_db` in docker-compose reflect that; the image is built from the Dutch dashboard codebase today but is named and used as the company PHP/website stack.
 
+**Nginx policy:** This repo must **never** deploy, modify, or reload **server nginx** configuration. Nginx on rop01 is owned by the **other** project (`04_setup_nginx.yml` and related). This repo only syncs static files to docroots and runs the PHP/MariaDB Docker stack. Do not add nginx templates or playbooks here.
+
 ---
 
 ## VPS connection (reference only)
@@ -19,18 +21,16 @@ Use this section only to understand how the VPS is reached; do not add new conne
 
 ---
 
-## 04_setup_nginx.yml and nginx template (reference)
+## Nginx on rop01 (reference only — other project)
 
-Maintained by the other project. This section documents the current shape so we know where dutch.mt and the PHP dashboard fit.
+Nginx is installed and configured on the VPS by the **other** project (`04_setup_nginx.yml`). **This repo does not contain nginx playbooks or templates** and must not change `/etc/nginx` on the server.
 
-- **Playbook:** `04_setup_nginx.yml`. Runs on `{{ vm_name }}_user`. Installs nginx, certbot; creates site configs from `templates/nginx-site.conf.j2`; obtains Let’s Encrypt SSL; sets security headers and certbot renewal cron.
-- **Domain list (default `nginx_domains`):**
-  - **reignofplay.com** (with www) → root `/var/www/reignofplay.com`
-  - **dutch.reignofplay.com** → root `/var/www/dutch.reignofplay.com`, `backend_port: 5001`, `backend_ws_port: 8080`, `serve_flutter_web: true`
-  - **dutch.mt** → same root as dutch.reignofplay.com: `/var/www/dutch.reignofplay.com`, same `backend_port` and `backend_ws_port`, `serve_flutter_web: true`
-- **Docroots:** Per-domain dirs under `/var/www/<domain>`. For dutch.mt and dutch.reignofplay.com the playbook uses a single root: `/var/www/dutch.reignofplay.com` (with subdirs `downloads/`, `sponsors/images/`, `sim_players/images/`).
-- **Template `nginx-site.conf.j2`:** For domains with `backend_port` and `serve_flutter_web`: serves static from `root_dir`; proxies API paths to `127.0.0.1:{{ backend_port }}` (Flask); proxies `/ws` to `backend_ws_port`; Flutter SPA at `/` with `try_files` and static caching. **No PHP** in this template — the Dutch dashboard PHP backend is not yet served by nginx.
-- **Implication for this project:** When we add PHP server logic (Dutch dashboard), we will need to deploy the PHP app and configure nginx to serve it (e.g. PHP-FPM + a `location` for the dashboard, or a separate site). We do not change the overall structure of `04_setup_nginx.yml` or the list of domains; we only add what’s needed to run the PHP app (e.g. deploy files, optional nginx snippet or role for the dashboard).
+Reference (maintained elsewhere):
+
+- **Playbook:** `04_setup_nginx.yml` — installs nginx, certbot, per-domain site configs, SSL.
+- **Domains (typical):** reignofplay.com → `/var/www/reignofplay.com`; dutch.reignofplay.com / dutch.mt → `/var/www/dutch.reignofplay.com`; dashboard.reignofplay.com → `/var/www/reignofplay.com/dashboard` with `/api/` proxied to **127.0.0.1:8081** (PHP container).
+
+When nginx routing or SSL needs to change, do it in the **other** project — not here.
 
 ---
 
@@ -44,7 +44,7 @@ Verified by SSH to rop01. Use this when checking or deploying web files for reig
 - **Sites available:** `/etc/nginx/sites-available/`.
 - **reignofplay.com:** `/etc/nginx/sites-available/reignofplay.com` (enabled via symlink).
 - **dutch.reignofplay.com:** `/etc/nginx/sites-available/dutch.reignofplay.com` (enabled via symlink).
-- **dashboard.reignofplay.com:** `/etc/nginx/sites-available/dashboard.reignofplay.com` (enabled via symlink; added by playbook `04_config_nginx.yml`). Serves from `/var/www/reignofplay.com/dashboard`.
+- **dashboard.reignofplay.com:** `/etc/nginx/sites-available/dashboard.reignofplay.com` (enabled via symlink). Serves from `/var/www/reignofplay.com/dashboard` (config maintained by the **other** project).
 
 **reignofplay.com nginx (summary):**
 
@@ -75,13 +75,11 @@ Verified by SSH to rop01. Use this when checking or deploying web files for reig
 - **Host port:** `8081` (mapped from container port 80). PHP app is reachable on the VPS at **`127.0.0.1:8081`**.
 - **Deploy dir:** `/opt/apps/reignofplay/rop_website`. Start with `02_deploy_docker_compose.yml` and ensure containers are up (`docker compose up -d` in that dir).
 
-**Nginx (playbook `04_config_nginx.yml`):**
+**Nginx (other project — not this repo):**
 
-- **dashboard.reignofplay.com** serves static files from `/var/www/reignofplay.com/dashboard` and proxies **`/api/`** to the PHP backend:
-  - `location /api/` → `proxy_pass http://127.0.0.1:8081` (port from var `dashboard_php_backend_port`, default 8081).
-- Frontend (e.g. `register.html`, `login.html`) calls `/api/register.php`, `/api/login.php`, `/api/refresh.php`, etc.; those requests go to the `rop_website_php` container.
+- **dashboard.reignofplay.com** serves static from `/var/www/reignofplay.com/dashboard` and proxies **`/api/`** to **`127.0.0.1:8081`** (PHP container). Frontend calls `/api/login.php`, etc.
 
-**Summary:** Static dashboard (05_deploy_dashboard) + nginx (04_config_nginx) + PHP stack (02_deploy_docker_compose, containers running). Register/login and other `/api/*` endpoints work when all three are in place.
+**Summary:** Static dashboard (`05_deploy_dashboard`) + PHP stack (`02_deploy_docker_compose`, containers running) + **server nginx already configured elsewhere**. Register/login and `/api/*` work when nginx, static files, and PHP are all in place.
 
 ---
 
@@ -116,7 +114,7 @@ Migrations update **only** the installed database (new tables, columns, etc.) wi
 
 ## Scope of this project in playbooks/rop01
 
-- **We do not:** Implement or change VPS connectivity, SSH keys, inventory, firewall, base nginx/Docker setup, or other major structural config. That stays in the other project.
+- **We do not:** Implement or change VPS connectivity, SSH keys, inventory, firewall, **nginx**, base Docker setup, or other major structural config. That stays in the other project.
 - **We do:** PHP server–related logic for the **company (Reign of Play) website/backend** on the VPS. That includes, for example:
   - Building and deploying the company PHP/website image (Dockerfile: `00_Codebase/php_base_001/Dockerfile`, build context: `00_Codebase`; `01_build_and_push_php_docker.py`, `rop_website_php` in docker-compose).
   - The company SQL DB (`rop_website_db` in docker-compose) used by the PHP backend (e.g. database `dutch_dashboard`).
@@ -125,12 +123,8 @@ Migrations update **only** the installed database (new tables, columns, etc.) wi
   - **PHP container logs** `07_check_php_logs.yml`: runs `docker logs rop_website_php --tail N` on the VPS and prints the output. Optional: `-e php_log_tail=200` (default 100). Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/07_check_php_logs.yml -e vm_name=rop01`.
   - **Dashboard users update** `07_update_dashboard_users.py`: updates `dutch_dashboard.users` from `playbooks/rop01/templates/.update_users` (YAML list under `dashboard_users`). Uses SSH connection from `playbooks/rop01/inventory.ini` ([rop01_user] group: ansible_host, ansible_user, ansible_ssh_private_key_file). Edit `templates/.update_users` with username, email, role, password (plain; hashed via `rop_website_php` on the host). Run from repo root: `python3 playbooks/rop01/07_update_dashboard_users.py`. New users are INSERTed; existing users are UPDATEd only for columns that differ.
   - **Static web deploy** `03_deploy_reignofplay_web.yml`: syncs the contents of local `00_Codebase/html_js_css_base_001` to `/var/www/reignofplay.com` on the VPS. Does not delete existing subdirs (e.g. `downloads/`, `sim_players/`, `sponsors/`); sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/03_deploy_reignofplay_web.yml -e vm_name=rop01`.
-  - **Nginx dashboard site** `04_config_nginx.yml`: adds a server block for `dashboard.reignofplay.com` serving from `/var/www/reignofplay.com/dashboard`. Ensures the dashboard docroot exists, deploys the site config, enables it, and reloads nginx. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04_config_nginx.yml -e vm_name=rop01`. For HTTPS, run certbot for `dashboard.reignofplay.com` after the first deploy.
-  - **Reign of Play apex HTTPS** `04b_ensure_reignofplay_com_ssl.yml`: ensures `reignofplay.com` has an HTTPS (443) server block so `https://reignofplay.com` serves the main site (root `/var/www/reignofplay.com`), not the dashboard. Without it, nginx uses the default 443 server (dashboard) for the apex. Deploys a snippet and adds an include to the existing reignofplay.com config. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/04b_ensure_reignofplay_com_ssl.yml -e vm_name=rop01`.
   - **Dashboard deploy** `05_deploy_dashboard.yml`: syncs the contents of local `00_Codebase/00_dashboard` to `/var/www/reignofplay.com/dashboard` (dashboard.reignofplay.com). Sets ownership to www-data. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05_deploy_dashboard.yml -e vm_name=rop01`.
   - **Dutch.mt deploy** `05b_deploy_dutch_mt.yml`: syncs `00_Codebase/dutch_mt` to `/var/www/dutch.reignofplay.com` (dutch.reignofplay.com / dutch.mt). Those pages use client-side API detection to call dashboard.reignofplay.com for `/api/`; see **Dutch.mt static pages ↔ API detection and wiring** above. Run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/05b_deploy_dutch_mt.yml -e vm_name=rop01`.
-  - Deploying/configuring the PHP backend on the VPS (e.g. under `/var/www/dutch.reignofplay.com` or a dedicated path; dutch.mt shares that root per `04_setup_nginx.yml`).
-  - Nginx (or similar) config **only for the PHP app** — e.g. PHP-FPM, a `location` or include for the dashboard, env — without changing the overall domain/site structure defined in `04_setup_nginx.yml`.
   - Any playbook tasks or vars that are strictly about running and maintaining the company PHP/website stack on the existing rop01 VPS.
 
 When adding or changing playbooks under `playbooks/rop01/`, limit changes to the above PHP-app scope; defer connectivity and structural changes to the other project.
@@ -167,7 +161,7 @@ Do these **before** running `02_deploy_docker_compose.yml` (or before the first 
 3. **Inventory**
    - Ensure `playbooks/rop01/inventory.ini` exists and has `vm_name=rop01` and the `rop01_user` host (and key path) so the deploy playbook can run.
 
-4. **Optional — nginx for the dashboard**
-   - To serve the dashboard at a URL (e.g. dutch.mt/dashboard or a subdomain), nginx must be configured to proxy to port **8081** (or to the PHP container). That is separate from this playbook; do it when you’re ready to expose the dashboard.
+4. **Nginx**
+   - Server nginx (dashboard `/api/` proxy, SSL, vhosts) is configured in the **other** project. This repo does not deploy or reload nginx.
 
 After the above, run: `ansible-playbook -i playbooks/rop01/inventory.ini playbooks/rop01/02_deploy_docker_compose.yml -e vm_name=rop01`. The playbook deploys only to `/opt/apps/reignofplay/rop_website` and starts only `rop_website_php` and `rop_website_db`; it does not start or modify any main app containers.

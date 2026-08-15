@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Contact Reign of Play about Dutch — questions, feedback, and support." />
+  <title>Contact — Dutch</title>
+  <link rel="icon" href="/static_landing_images/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/static_landing_images/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/static_landing_css/styles.css" />
+</head>
+<body>
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="/static_landing_images/logo.webp" alt="Dutch app logo" decoding="async" />
+      </div>
+      <div>
+        <p class="brand-kicker">ReignOfPlay</p>
+        <h1 class="brand-title">Contact</h1>
+      </div>
+    </div>
+    <p class="tagline">Questions about Dutch, feedback, or support — send us a message.</p>
+    <p class="back-link"><a href="/">← Back to Dutch</a></p>
+  </header>
+
+  <main class="content content--contact">
+    <section class="card contact-card">
+      <div class="contact-card__intro">
+        <h2>Get in touch</h2>
+        <p class="muted">We read every message and will reply as soon as we can.</p>
+      </div>
+
+      <form id="contact-form" class="contact-form" data-source="Dutch" data-recipient="admin@reignofplay.com" novalidate>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" required autocomplete="name" placeholder="Your name" />
+          </div>
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" required autocomplete="email" placeholder="you@example.com" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="platform">Platform</label>
+          <select name="platform" id="platform" required>
+            <option value="" selected disabled>Select platform…</option>
+            <option value="iOS">iOS</option>
+            <option value="Android">Android</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="message">Message</label>
+          <textarea name="message" id="message" rows="5" required minlength="10" placeholder="How can we help?"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Send message</button>
+        </div>
+      </form>
+      <p id="contact-message" class="contact-message" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><a href="https://reignofplay.com">reignofplay.com</a> · <a href="/">Dutch</a> · <span id="year"></span></p>
+  </footer>
+
+  <script src="/static_landing_js/main.js" defer></script>
+  <script src="/static_landing_js/contact.js" defer></script>
+</body>
+</html>

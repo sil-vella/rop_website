@@ -41,7 +41,7 @@ Static frontend for the Dutch.mt Dashboard (login, protected dashboard, create-t
 |--------|--------------------|-----------|
 | `00_Codebase/00_dashboard/` | `/var/www/reignofplay.com/dashboard/` | **dashboard.reignofplay.com** |
 
-Nginx for dashboard.reignofplay.com is configured by playbook **04_config_nginx.yml**: static from that docroot, `location /api/` proxied to the PHP backend (127.0.0.1:8081). So after deploy, the dashboard pages and the API they call are both available under the same host.
+Server nginx for dashboard.reignofplay.com (static + `/api/` → 127.0.0.1:8081) is configured in the **other** project — not in this repo.
 
 ---
 

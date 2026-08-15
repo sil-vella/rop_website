@@ -11,9 +11,12 @@
 
 declare(strict_types=1);
 
-// Load .env if present (do not commit .env)
-$envPath = __DIR__ . '/.env';
-if (is_readable($envPath)) {
+// Load env file if present (do not commit). Prefer .env.rop_website (deploy source); .env is legacy.
+$envCandidates = [__DIR__ . '/.env.rop_website', __DIR__ . '/.env'];
+foreach ($envCandidates as $envPath) {
+    if (!is_readable($envPath)) {
+        continue;
+    }
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0) {
@@ -29,6 +32,7 @@ if (is_readable($envPath)) {
             }
         }
     }
+    break;
 }
 
 return [
@@ -37,6 +41,33 @@ return [
     'jwt_secret'          => getenv('JWT_SECRET') ?: '',
     'mail_from'           => getenv('MAIL_FROM') ?: 'noreply@reignofplay.com',
     'mail_from_name'      => getenv('MAIL_FROM_NAME') ?: 'Dutch.mt',
+    'mail_contact_to'     => getenv('MAIL_CONTACT_TO') ?: (getenv('MAIL_FROM') ?: 'hello@reignofplay.com'),
+    // Comma-separated inbox addresses contact forms may target (open-relay prevention).
+    'mail_contact_allowlist' => array_values(array_filter(array_map(
+        static function (string $e): string {
+            return strtolower(trim($e));
+        },
+        explode(',', (string) (getenv('MAIL_CONTACT_ALLOWLIST') ?: ''))
+    ))),
+    // Optional source→inbox map: ROP:a@x.com,Dutch:b@x.com,Portfolio:c@x.com
+    'mail_contact_by_source' => (static function (): array {
+        $raw = (string) (getenv('MAIL_CONTACT_BY_SOURCE') ?: '');
+        $map = [];
+        if ($raw === '') {
+            return $map;
+        }
+        foreach (explode(',', $raw) as $pair) {
+            $pair = trim($pair);
+            if ($pair === '' || strpos($pair, ':') === false) {
+                continue;
+            }
+            [$src, $email] = array_map('trim', explode(':', $pair, 2));
+            if ($src !== '' && $email !== '') {
+                $map[$src] = strtolower($email);
+            }
+        }
+        return $map;
+    })(),
     'mail_smtp_enabled'   => filter_var(getenv('MAIL_SMTP_ENABLED'), FILTER_VALIDATE_BOOLEAN),
     'mail_smtp_host'      => getenv('MAIL_SMTP_HOST') ?: 'smtp.gmail.com',
     'mail_smtp_port'      => (int) (getenv('MAIL_SMTP_PORT') ?: '587'),

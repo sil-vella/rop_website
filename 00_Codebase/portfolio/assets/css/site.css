@@ -1,0 +1,158 @@
+/* Site-specific overrides on top of Strata */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem 1.25rem;
+  list-style: none;
+  margin: 1.5em 0 0;
+  padding: 0;
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.site-nav a {
+  border-bottom: none;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: #fff;
+}
+
+@media screen and (max-width: 980px) {
+  .site-nav {
+    justify-content: center;
+  }
+}
+
+#contact-form.hidden {
+  display: none;
+}
+
+.contact-message {
+  margin-top: 1em;
+  font-size: 0.95em;
+}
+
+.contact-message.msg-info {
+  color: #888;
+}
+
+.contact-message.msg-success {
+  color: #4a9;
+}
+
+.contact-message.msg-error {
+  color: #c55;
+}
+
+.contact-message:empty {
+  display: none;
+}
+
+.work-item-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: 220px;
+  margin: 0 0 1.5em 0;
+  padding: 0.75em;
+  border: 1px solid #ddd;
+  border-radius: 0.35em;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.work-item-media:before {
+  border-radius: 0.25em;
+}
+
+.work-item-media img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.work-item-links {
+  margin-top: 1em;
+}
+
+.work-item-links .button.small,
+.work-item .button.small {
+  font-size: 0.7em;
+  padding: 0 1.25em;
+  height: 2.5em;
+  line-height: 2.5em;
+}
+
+.work-item h3 a {
+  border-bottom: none;
+  color: inherit;
+}
+
+.work-item h3 a:hover {
+  color: #49bf9d;
+}
+
+.work-detail-image {
+  margin: 0 0 2em 0;
+  max-height: 420px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.work-detail-image img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  display: block;
+}
+
+.work-gallery {
+  margin: 0 0 2em 0;
+}
+
+.work-gallery-item {
+  margin-bottom: 1.5em;
+}
+
+.work-gallery-item .image {
+  display: block;
+  background: #f5f5f5;
+  border-bottom: none;
+}
+
+.work-gallery-item img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  display: block;
+}
+
+.work-video-embed {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 2em;
+  aspect-ratio: 16 / 9;
+  background: #111;
+}
+
+.work-video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

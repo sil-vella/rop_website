@@ -21,6 +21,7 @@ No secrets are baked into the Docker image; they are supplied at runtime.
 | `service_key` | `DUTCH_MT_DASHBOARD_SERVICE_KEY` | Secret for service-to-service calls (X-Service-Key). |
 | `jwt_secret` | `JWT_SECRET` | Secret used to sign and verify JWTs. |
 | `db` | `DB_*` | Associative array: `host`, `name`, `user`, `password`. |
+| `mail_*` / `mail_smtp_*` | `MAIL_*` / `MAIL_SMTP_*` | From address, contact inbox, SMTP enable/host/port/encrypt/user/password. See [MAIL_SMTP.md](MAIL_SMTP.md). |
 
 **Defaults (if env not set):**
 
@@ -53,6 +54,23 @@ No secrets are baked into the Docker image; they are supplied at runtime.
 | `MARIADB_DATABASE` | Set to `dutch_dashboard` in compose. |
 
 Often `DB_USER`/`DB_PASSWORD` match `MARIADB_USER`/`MARIADB_PASSWORD` so PHP connects as the same user.
+
+### Mail / SMTP (optional but required for contact forms in prod)
+
+| Variable | Description |
+|----------|-------------|
+| `MAIL_FROM` | Envelope From address |
+| `MAIL_FROM_NAME` | Display name |
+| `MAIL_CONTACT_TO` | Contact-form inbox (defaults to `MAIL_FROM`) |
+| `MAIL_CONTACT_ALLOWLIST` | Comma-separated emails allowed as JSON `recipient` |
+| `MAIL_CONTACT_BY_SOURCE` | Optional `ROP:a@x,Dutch:b@x,Portfolio:c@x` when `recipient` omitted |
+| `MAIL_SMTP_ENABLED` | `1` / `true` to use SMTP instead of `mail()` |
+| `MAIL_SMTP_HOST` | e.g. `smtppro.zoho.eu` |
+| `MAIL_SMTP_PORT` | e.g. `465` |
+| `MAIL_SMTP_ENCRYPT` | `ssl` or `tls` |
+| `MAIL_SMTP_USER` / `MAIL_SMTP_PASSWORD` | SMTP AUTH |
+
+Full contact-form, `source` tags, and CORS behavior: **[MAIL_SMTP.md](MAIL_SMTP.md)**.
 
 ---
 

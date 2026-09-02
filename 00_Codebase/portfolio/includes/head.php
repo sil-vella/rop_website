@@ -4,6 +4,10 @@ declare(strict_types=1);
 $pageTitle = $pageTitle ?? 'Untitled';
 $pageDescription = $pageDescription ?? '';
 $basePath = rtrim($basePath ?? '', '/');
+
+if (!headers_sent()) {
+    header('X-Robots-Tag: noindex, nofollow', true);
+}
 ?>
 <!DOCTYPE HTML>
 <!--
@@ -15,6 +19,7 @@ $basePath = rtrim($basePath ?? '', '/');
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
   <?php if ($pageDescription !== '') : ?>
     <meta name="description" content="<?= htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8') ?>">
   <?php endif; ?>

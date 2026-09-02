@@ -77,6 +77,62 @@ HTML,
                 ['label' => 'Google Play', 'url' => 'https://play.google.com/store/apps/details?id=com.reignofplay.dutch'],
             ],
         ],
+        'dash-ops' => [
+            'slug' => 'dash-ops',
+            'title' => 'Ops Dashboard · Marketing Desk',
+            'summary' => 'Local browser twin of my CLI runner — scripts, planning, social publish, revenue, and downloads in one window on the same env.',
+            'description' => 'Solo-built local ops dashboard: run automation scripts, plan work, publish social, and track store revenue and downloads next to the same environment the CLI uses.',
+            'body_html' => <<<'HTML'
+<p>A CLI alone is not an ops surface. Launches and builds fit a terminal menu; drafting social posts, checking store revenue, logging expenses, and reading product docs do not — and they should not invent a second credential store in the browser.</p>
+<p>This dashboard is the <strong>opt-in browser twin of <code>wfrun</code></strong>: same script discovery and env files, plus workflows that never belonged in a numbered menu.</p>
+<h3>What it covers</h3>
+<ul>
+  <li><strong>Ops dash</strong> — scripts with an embedded terminal, Task Manager, in-app docs, and case study HTML.</li>
+  <li><strong>Marketing desk</strong> — compose once, attach media, publish to Meta / YouTube / TikTok; saved drafts, live post metrics, and a campaign queue.</li>
+  <li><strong>Revenue &amp; downloads</strong> — AdMob, Play, and App Store money (estimated vs settled), install units, and a local expense log — separate subtabs, shared store credentials.</li>
+</ul>
+<h3>Stack</h3>
+<ul>
+  <li><strong>aiohttp</strong> local dash server with <strong>xterm.js</strong> for live script PTYs.</li>
+  <li>Social: Meta Graph, YouTube Data API, TikTok Posting API.</li>
+  <li>Stores: Play GCS, App Store Connect, AdMob.</li>
+</ul>
+<h3>What I cared about</h3>
+<ul>
+  <li>One local window for day-to-day ops, docs, money, and social — same env as the CLI.</li>
+  <li>Manual posts and scheduled campaign drips sharing one contract.</li>
+  <li>Portable into product repos (Dutch, Arcori) without rebuilding the desk.</li>
+</ul>
+HTML,
+            'full' => '/content/work/case_studies/dash-ops/images/01.png',
+            'thumb' => '/content/work/case_studies/dash-ops/images/01.png',
+            'gallery' => [
+                [
+                    'src' => '/content/work/case_studies/dash-ops/images/01.png',
+                    'alt' => 'Ops dashboard — main tabs',
+                ],
+                [
+                    'src' => '/content/work/case_studies/dash-ops/images/02.jpg',
+                    'alt' => 'Scripts — accordion and terminal',
+                ],
+                [
+                    'src' => '/content/work/case_studies/dash-ops/images/04.png',
+                    'alt' => 'Revenue — KPIs and series table',
+                ],
+                [
+                    'src' => '/content/work/case_studies/dash-ops/images/06.png',
+                    'alt' => 'Marketing — compose and saved posts',
+                ],
+            ],
+            'case_studies' => [
+                [
+                    'label' => 'Read the case study',
+                    'url' => '/content/work/case_studies/dash-ops/case-study-ops-dashboard.html',
+                    'summary' => 'Solo build: local ops plane, marketing desk, and store revenue next to the CLI.',
+                ],
+            ],
+            'links' => [],
+        ],
         'arcori' => [
             'slug' => 'arcori',
             'title' => 'Arcori',

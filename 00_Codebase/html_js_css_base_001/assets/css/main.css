@@ -2679,6 +2679,40 @@ input, select, textarea {
 			display: block;
 		}
 
+	/* Velora regions */
+	#main .region {
+		margin: 0 0 3em 0;
+	}
+
+		#main .region > .image.fit {
+			display: block;
+			width: 100%;
+			margin: 0 0 1.5em 0;
+			background: #1a1a1a;
+		}
+
+			#main .region > .image.fit img {
+				width: 100%;
+				height: auto;
+				display: block;
+			}
+
+		#main .region .region-locations {
+			margin: 1.5em 0 0 0;
+		}
+
+			#main .region .region-locations .image.fit {
+				margin: 0 0 1.5em 0;
+				background: #1a1a1a;
+			}
+
+			#main .region .region-locations .image.fit img {
+				width: 100%;
+				max-height: 220px;
+				object-fit: cover;
+				display: block;
+			}
+
 /* List */
 
 	ol {

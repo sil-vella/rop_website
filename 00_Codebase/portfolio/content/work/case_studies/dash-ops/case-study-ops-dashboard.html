@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Ops Dashboard · Marketing Desk — Case Study</title>
+  <meta name="description" content="Solo case study: local ops dashboard, marketing desk, revenue and downloads.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08110f;
+      --bg-2: #0d1a16;
+      --panel: #12201c;
+      --ink: #e8f2ee;
+      --muted: #8aa399;
+      --line: #243832;
+      --accent: #2ec4a2;
+      --accent-2: #f0c75e;
+      --max: 72rem;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(46, 196, 162, 0.14), transparent 55%),
+        radial-gradient(900px 500px at -10% 20%, rgba(240, 199, 94, 0.08), transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 40%, var(--bg) 100%);
+      font-family: "Public Sans", sans-serif;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+    a:hover { color: #7ee0c8; }
+
+    .wrap {
+      width: min(100% - 2rem, var(--max));
+      margin-inline: auto;
+    }
+
+    .hero {
+      position: relative;
+      min-height: min(100vh, 54rem);
+      display: grid;
+      align-items: end;
+      padding: 2rem 0 3.25rem;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(46, 196, 162, 0.05) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(rgba(46, 196, 162, 0.04) 1px, transparent 1px) 0 0 / 48px 48px;
+      mask-image: linear-gradient(180deg, #000 30%, transparent 95%);
+      pointer-events: none;
+      animation: gridDrift 28s linear infinite;
+    }
+
+    @keyframes gridDrift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 48px 48px, 48px 48px; }
+    }
+
+    .hero-inner { position: relative; z-index: 1; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 1.25rem;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 1.5rem;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .hero h1 {
+      margin: 0 0 1rem;
+      max-width: 16ch;
+      font-family: Syne, sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.35rem, 6.2vw, 4.2rem);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
+      animation: rise 0.9s var(--ease) both;
+    }
+
+    .hero-lead {
+      margin: 0 0 1.75rem;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1.12rem;
+      animation: rise 0.9s var(--ease) 0.12s both;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-bottom: 1.5rem;
+      animation: rise 0.9s var(--ease) 0.18s both;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.7rem;
+      border: 1px solid var(--line);
+      background: rgba(18, 32, 28, 0.7);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .pillars {
+      display: grid;
+      gap: 0.65rem;
+      margin-bottom: 1.75rem;
+      animation: rise 0.9s var(--ease) 0.22s both;
+    }
+    @media (min-width: 720px) {
+      .pillars { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .pillar {
+      padding: 0.85rem 0.95rem;
+      border-top: 2px solid var(--accent);
+      background: rgba(18, 32, 28, 0.55);
+    }
+
+    .pillar-num {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--accent-2);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+    }
+
+    .pillar strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-family: Syne, sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .pillar span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .version-switch {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.3rem;
+      border: 1px solid var(--line);
+      background: rgba(8, 17, 15, 0.75);
+      animation: rise 0.9s var(--ease) 0.28s both;
+    }
+
+    .version-switch button {
+      appearance: none;
+      border: 0;
+      margin: 0;
+      padding: 0.55rem 0.95rem;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), color 0.2s var(--ease);
+    }
+
+    .version-switch button[aria-pressed="true"] {
+      background: var(--accent);
+      color: #04201a;
+    }
+
+    .version-switch button:focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 2px;
+    }
+
+    .version-hint {
+      margin: 0.75rem 0 0;
+      max-width: 36rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      animation: rise 0.9s var(--ease) 0.32s both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .version[hidden] { display: none !important; }
+
+    section {
+      padding: 4.5rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-kicker {
+      margin: 0 0 0.65rem;
+      color: var(--accent-2);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 1rem;
+      font-family: Syne, sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.7rem, 3.2vw, 2.35rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin: 2.25rem 0 0.75rem;
+      font-family: Syne, sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+
+    p { margin: 0 0 1rem; color: #c5d6cf; }
+    p:last-child { margin-bottom: 0; }
+    .lede { font-size: 1.12rem; color: #d5e4de; }
+
+    ul, ol {
+      margin: 0 0 1rem;
+      padding-left: 1.2rem;
+      color: #c5d6cf;
+    }
+    li { margin: 0.35rem 0; }
+    li::marker { color: var(--accent); }
+
+    .two-col {
+      display: grid;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    @media (min-width: 840px) {
+      .two-col { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+
+    .stat-row {
+      display: grid;
+      gap: 1rem;
+      margin-top: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    }
+
+    .stat {
+      padding: 1.1rem 1rem 1.2rem;
+      border-top: 2px solid var(--accent);
+      background: linear-gradient(180deg, rgba(46, 196, 162, 0.08), transparent 70%);
+    }
+
+    .stat strong {
+      display: block;
+      font-family: Syne, sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .story-block {
+      margin-top: 1.75rem;
+      padding: 1.25rem 1.35rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(18, 32, 28, 0.65);
+    }
+
+    .story-block p { color: #d5e4de; }
+
+    .shot { margin: 1.75rem 0 0; }
+
+    .shot-frame {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      border: 1px dashed rgba(46, 196, 162, 0.45);
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          rgba(46, 196, 162, 0.04),
+          rgba(46, 196, 162, 0.04) 8px,
+          transparent 8px,
+          transparent 16px
+        ),
+        var(--panel);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .shot-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 40%, rgba(46, 196, 162, 0.07) 50%, transparent 60%);
+      transform: translateX(-100%);
+      animation: sheen 5.5s var(--ease) infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sheen {
+      0%, 55% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .shot-frame img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .shot-frame.has-image {
+      aspect-ratio: auto;
+      max-height: min(28rem, 55vh);
+      padding: 0;
+      border-style: solid;
+      border-color: var(--line);
+      background: #0a1210;
+    }
+
+    .shot-frame.has-image::after {
+      display: none;
+    }
+
+    .shot-frame.has-image img {
+      position: static;
+      inset: auto;
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-height: min(28rem, 55vh);
+      object-fit: contain;
+      object-position: center;
+    }
+
+    .shot-frame.has-image .shot-ph { display: none; }
+
+    .shot-grid .shot-frame.has-image,
+    .shot-grid .shot-frame.has-image img {
+      max-height: min(20rem, 42vh);
+    }
+
+    .shot-ph {
+      position: relative;
+      z-index: 1;
+      max-width: 28rem;
+    }
+
+    .shot-id {
+      display: inline-block;
+      margin-bottom: 0.55rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--line);
+      color: var(--accent);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+    }
+
+    .shot-title {
+      margin: 0 0 0.4rem;
+      font-family: Syne, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .shot-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    figcaption {
+      margin-top: 0.65rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .shot-grid {
+      display: grid;
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 760px) {
+      .shot-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .flow {
+      margin: 1.5rem 0 0;
+      padding: 1.15rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(18, 32, 28, 0.85);
+      overflow-x: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: #b7d0c6;
+      white-space: pre;
+    }
+
+    .callout {
+      margin: 1.5rem 0 0;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--line);
+      background: rgba(240, 199, 94, 0.06);
+    }
+
+    .callout strong { color: var(--accent-2); }
+
+    .toc {
+      display: grid;
+      gap: 0.45rem;
+      margin: 1.25rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .toc a {
+      color: #c5d6cf;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .toc a:hover {
+      color: var(--accent);
+      border-bottom-color: rgba(46, 196, 162, 0.4);
+    }
+
+    .stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+
+    footer {
+      padding: 2.5rem 0 3.5rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    footer .wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <p class="eyebrow">Case study · solo project</p>
+      <h1>Ops Dashboard · Marketing Desk</h1>
+      <p class="hero-lead">
+        The local browser twin of <code>wfrun</code>: run scripts, plan work, publish social,
+        track revenue and downloads, and keep docs next to the same env the CLI uses.
+      </p>
+
+      <div class="pillars" aria-label="Ops pillars">
+        <div class="pillar">
+          <span class="pillar-num">01</span>
+          <strong>Ops dash</strong>
+          <span>Scripts · Task Manager · Docs · Case Study · Revenue</span>
+        </div>
+        <div class="pillar">
+          <span class="pillar-num">02</span>
+          <strong>Marketing desk</strong>
+          <span>Compose · publish · live posts · metrics · campaign queue</span>
+        </div>
+        <div class="pillar">
+          <span class="pillar-num">03</span>
+          <strong>Store money &amp; installs</strong>
+          <span>AdMob · Play · App Store revenue · Downloads all-time</span>
+        </div>
+      </div>
+
+      <div class="hero-meta">
+        <span class="chip">Solo · design + implementation</span>
+        <span class="chip">aiohttp · xterm.js</span>
+        <span class="chip">Meta · YouTube · TikTok</span>
+        <span class="chip">Play GCS · ASC · AdMob</span>
+        <span class="chip">2026</span>
+      </div>
+
+      <div class="version-switch" role="group" aria-label="Case study version">
+        <button type="button" id="btn-overview" aria-pressed="true" data-version="overview">Overview</button>
+        <button type="button" id="btn-technical" aria-pressed="false" data-version="technical">Technical</button>
+      </div>
+      <p class="version-hint" id="version-hint">
+        Overview — plain-language ops and marketing story.
+      </p>
+    </div>
+  </header>
+
+  <div class="version" id="version-overview" data-version-panel="overview">
+    <main>
+      <section id="ov-snapshot">
+        <div class="wrap">
+          <p class="section-kicker">01 — In short</p>
+          <h2>Day-to-day product ops in one local window</h2>
+          <p class="lede">
+            The CLI runner stays default. The dashboard is opt-in: same script discovery and env
+            files, plus workflows that never belonged in a numbered menu — planning, marketing,
+            revenue, downloads, and docs.
+          </p>
+          <div class="stat-row">
+            <div class="stat"><strong>6</strong><span>Main dash tabs (scripts, TM, marketing, revenue, docs, case study)</span></div>
+            <div class="stat"><strong>3</strong><span>Revenue subtabs (money · downloads · expense)</span></div>
+            <div class="stat"><strong>3</strong><span>Social platforms from one compose contract</span></div>
+            <div class="stat"><strong>1</strong><span>Env SSOT — never a second secret store in the browser</span></div>
+          </div>
+          <nav aria-label="Overview sections">
+            <ul class="toc">
+              <li><a href="#ov-problem">The problem</a></li>
+              <li><a href="#ov-dash">Ops dash</a></li>
+              <li><a href="#ov-revenue">Revenue &amp; downloads</a></li>
+              <li><a href="#ov-marketing">Marketing desk</a></li>
+              <li><a href="#ov-impact">Impact</a></li>
+            </ul>
+          </nav>
+          <figure class="shot">
+            <div class="shot-frame has-image" data-shot="01">
+              <img src="images/01.png" alt="Dash chrome overview">
+            </div>
+            <figcaption>Ops dashboard — main tabs.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="ov-problem">
+        <div class="wrap">
+          <p class="section-kicker">02 — The problem</p>
+          <h2>A CLI alone is not an ops surface</h2>
+          <div class="two-col">
+            <div>
+              <p>
+                Launches and builds fit a terminal menu. Drafting social posts, checking store
+                revenue, logging expenses, and reading product docs do not — and they should not
+                invent a second credential store in the browser.
+              </p>
+            </div>
+            <div class="story-block">
+              <p>
+                <strong style="color: var(--ink);">Goal:</strong> one local window next to
+                <code>wfrun</code> — same env, same runners, GUI for the rest.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="ov-dash">
+        <div class="wrap">
+          <p class="section-kicker">03 — Ops dash</p>
+          <h2>A browser twin of my automation menu</h2>
+          <ul>
+            <li><strong>Scripts</strong> — grouped runners + embedded terminal; builds keep running when I change tabs</li>
+            <li><strong>Task Manager</strong> — planning board embedded via same-origin proxy</li>
+            <li><strong>Documentation</strong> — browse <code>Documentation/</code> markdown in-app</li>
+            <li><strong>Case Study</strong> — HTML narratives with Overview / Technical (this page lives there)</li>
+            <li><strong>Marketing</strong> — compose, publish, platform browse, metrics</li>
+            <li><strong>Revenue</strong> — estimated/settled money, downloads, expenses</li>
+          </ul>
+          <div class="shot-grid">
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="02">
+              <img src="images/02.jpg" alt="Scripts and live PTY">
+            </div>
+            <figcaption>Scripts — accordion + terminal.</figcaption>
+            </figure>
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="03">
+              <img src="images/03.png" alt="Task Manager embed">
+            </div>
+            <figcaption>Task Manager — planning board.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="ov-revenue">
+        <div class="wrap">
+          <p class="section-kicker">04 — Revenue &amp; downloads</p>
+          <h2>Store money and installs next to ops</h2>
+          <p class="lede">
+            Revenue is not marketing. It sits under its own tab with three subtabs so money,
+            installs, and costs stay separate — but share the same env credentials as Play / ASC / AdMob.
+          </p>
+          <ul>
+            <li><strong>Revenue</strong> — estimated vs settled from AdMob, Play GCS sales/earnings, App Store Connect sales/finance; all-time tracked ledger + month KPIs; mixed currencies not FX-summed</li>
+            <li><strong>Downloads</strong> — Play Daily User Installs (<code>stats/installs/*_overview.csv</code>) + ASC app download units; all-time tracked via <code>download_entries</code></li>
+            <li><strong>Expense</strong> — local cost log (ads, tools, hosting, …) persisted with profit = rev − exp per currency</li>
+          </ul>
+          <div class="shot-grid">
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="04">
+              <img src="images/04.png" alt="Revenue KPIs and table">
+            </div>
+            <figcaption>Revenue — KPIs and series table.</figcaption>
+            </figure>
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="05">
+              <img src="images/05.png" alt="Downloads subtab">
+            </div>
+            <figcaption>Downloads — units and all-time KPIs.</figcaption>
+            </figure>
+          </div>
+          <div class="callout">
+            <strong>Tracked ≠ store lifetime API.</strong> All-time grows when you widen From and
+            Refresh — days merge into <code>revenue_ledger.json</code> (money and downloads kept apart).
+          </div>
+        </div>
+      </section>
+
+      <section id="ov-marketing">
+        <div class="wrap">
+          <p class="section-kicker">05 — Marketing desk</p>
+          <h2>Compose once, publish where I choose</h2>
+          <p class="lede">
+            Draft a post, attach media, set per-platform options, publish only to the networks I
+            checked. Saved drafts stay local. Platform browse opens Facebook / YouTube posts with
+            on-demand metrics. Campaign clips drip through a host cron using the same caption and
+            token rules.
+          </p>
+          <div class="shot-grid">
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="06">
+              <img src="images/06.png" alt="Marketing compose">
+            </div>
+            <figcaption>Marketing — saved / compose.</figcaption>
+            </figure>
+            <figure class="shot">
+              <div class="shot-frame has-image" data-shot="07">
+              <img src="images/07.png" alt="Live post metrics">
+            </div>
+            <figcaption>Marketing — platform metrics.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="ov-impact">
+        <div class="wrap">
+          <p class="section-kicker">06 — Impact</p>
+          <h2>What this unlocked</h2>
+          <ul>
+            <li>Day-to-day ops, docs, money, and social live in one local window on the same env as the CLI.</li>
+            <li>Manual posts and scheduled campaign drips share one contract — no per-repo drift.</li>
+            <li>Revenue and downloads persist locally so all-time KPIs grow with each Refresh.</li>
+            <li>Ported into product repos (Dutch, Arcori) without rebuilding the desk.</li>
+          </ul>
+          <div class="callout">
+            <strong>Product foundation?</strong> See the sibling case study <em>Codebase Template</em>
+            for FastAPI / Dart / Flutter architecture.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="version" id="version-technical" data-version-panel="technical" hidden>
+    <main>
+      <section id="tech-snapshot">
+        <div class="wrap">
+          <p class="section-kicker">01 — Snapshot</p>
+          <h2>Local aiohttp ops plane</h2>
+          <p class="lede">
+            <code>automation/dashboard/serve.py</code> on <code>:8765</code> plus
+            <code>automation/marketing/</code> and <code>automation/revenue/</code>. Env SSOT via
+            <code>wfrun</code> — never a second secret store in the browser.
+          </p>
+          <nav aria-label="Technical sections">
+            <ul class="toc">
+              <li><a href="#tech-principles">Principles</a></li>
+              <li><a href="#tech-dashboard">Ops dash</a></li>
+              <li><a href="#tech-revenue">Revenue &amp; downloads</a></li>
+              <li><a href="#tech-marketing">Marketing desk</a></li>
+              <li><a href="#tech-queue">Campaign queue</a></li>
+              <li><a href="#tech-architecture">Architecture</a></li>
+              <li><a href="#tech-hard">Hard problems</a></li>
+              <li><a href="#tech-stack">Stack &amp; next</a></li>
+            </ul>
+          </nav>
+        </div>
+      </section>
+
+      <section id="tech-principles">
+        <div class="wrap">
+          <p class="section-kicker">02 — Principles</p>
+          <h2>Ops non-negotiables</h2>
+          <ul>
+            <li>CLI <code>wfrun</code> remains default; dash is opt-in.</li>
+            <li>Env files SSOT; never log full tokens / <code>.p8</code> / SA JSON.</li>
+            <li>Money KPIs and download KPIs use separate ledger maps — no mixing into profit.</li>
+            <li>Same caption/token contract for Marketing UI and host cron.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-dashboard">
+        <div class="wrap">
+          <p class="section-kicker">03 — Ops dash</p>
+          <h2><code>automation/dashboard/serve.py</code></h2>
+          <ul>
+            <li><strong>Scripts</strong> — <code># dash</code> discovery, <code>/ws/run</code> PTY, xterm.js; brand via <code>REPO_BRAND</code></li>
+            <li><strong>Task Manager</strong> — same-origin <code>/tm/*</code> proxy (session + CSRF)</li>
+            <li><strong>Docs / Case Study</strong> — <code>docs_discovery.py</code>; HTML case studies only; Overview/Technical via <code>setCaseStudyVersion</code></li>
+            <li><strong>Marketing</strong> — routes under <code>/api/marketing/*</code></li>
+            <li><strong>Revenue</strong> — <code>/api/revenue/*</code>, <code>/api/downloads/series</code>, <code>/api/expenses</code></li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-revenue">
+        <div class="wrap">
+          <p class="section-kicker">04 — Revenue &amp; downloads</p>
+          <h2>Collectors + local ledger</h2>
+          <ul>
+            <li><strong>AdMob</strong> — OAuth refresh + network report <code>ESTIMATED_EARNINGS</code></li>
+            <li><strong>Play money</strong> — GCS <code>sales/</code> (estimated) · <code>earnings/</code> (settled)</li>
+            <li><strong>ASC money</strong> — daily <code>salesReports</code> · monthly <code>financeReports</code></li>
+            <li><strong>Play downloads</strong> — <code>stats/installs/installs_&lt;pkg&gt;_YYYYMM_overview.csv</code> (Daily User Installs; UTF-16)</li>
+            <li><strong>ASC downloads</strong> — salesReports product types <code>1</code> / <code>1-B</code> / <code>F1</code> / <code>1F</code></li>
+            <li><strong>Ledger</strong> — <code>dashboard/data/revenue_ledger.json</code>:
+              <code>entries</code> (money, keys include <code>app_id</code>),
+              <code>download_entries</code> (units),
+              <code>expenses</code>,
+              <code>last_load</code> / <code>last_downloads_load</code></li>
+            <li>Multi-app AdMob rows must not share a day key — fixed by including <code>app_id</code> in persist keys</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-marketing">
+        <div class="wrap">
+          <p class="section-kicker">05 — Marketing desk</p>
+          <h2>Compose · publish · platform browse · metrics</h2>
+          <ul>
+            <li>Caption: YT title+description separate; FB/TT <code>title\\ndescription</code> + hashtags</li>
+            <li><code>POST /api/marketing/posts</code> multipart → only checked platforms</li>
+            <li>Saved JSON + media under gitignored <code>dashboard/data/</code></li>
+            <li>Platform posts: FB / YT paged (5); TT list deferred until Production <code>video.list</code></li>
+            <li>Metrics: FB engagement + Insights; YT <code>videos.list?part=statistics</code></li>
+            <li>Token validate / OAuth / refresh runners; interactive env write-back</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-queue">
+        <div class="wrap">
+          <p class="section-kicker">06 — Campaign queue</p>
+          <h2>Slim upload; host cron; same runners</h2>
+          <ul>
+            <li>Upload <code>00renders/</code> + <code>post_data.json</code> only</li>
+            <li>Cron rotates products; all selected platforms must succeed before delete + log</li>
+            <li>Orchestrator menu-excluded; upload listed in wfrun</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-architecture">
+        <div class="wrap">
+          <p class="section-kicker">07 — Architecture</p>
+          <h2>Ops plane</h2>
+          <pre class="flow">wfrun (local|prod env)
+  └─ automation/dashboard/serve.py :8765
+        Scripts | Task Manager (/tm) | Marketing | Revenue | Docs | Case Study
+  └─ automation/marketing/*
+        publish_* · *_post_metrics · token runners
+        upload_queue_to_hostinger · cron_social_auto_post (host)
+  └─ automation/revenue/*
+        admob_revenue · play_revenue · appstore_revenue
+        fetch_revenue · fetch_downloads</pre>
+        </div>
+      </section>
+
+      <section id="tech-hard">
+        <div class="wrap">
+          <p class="section-kicker">08 — Hard problems</p>
+          <h2>What broke in the wild</h2>
+          <ul>
+            <li><code>display: grid</code> beating HTML <code>[hidden]</code> on Marketing screens.</li>
+            <li>Task Manager CSRF fixed with same-origin <code>/tm</code> proxy.</li>
+            <li>Orphan Marketing markup outside its view panel leaked Create Post into Docs/Case Study.</li>
+            <li>Revenue all-time under-counted AdMob when two apps shared a day key (missing <code>app_id</code>).</li>
+            <li>Meta: User vs Page tokens; empty Insights = missing <code>read_insights</code>.</li>
+            <li>YouTube playlists needed <code>youtube.force-ssl</code> re-OAuth.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tech-stack">
+        <div class="wrap">
+          <p class="section-kicker">09 — Stack &amp; next</p>
+          <h2>Implementation surface</h2>
+          <div class="stack">
+            <span class="chip">aiohttp dash</span>
+            <span class="chip">xterm.js</span>
+            <span class="chip">Meta Graph</span>
+            <span class="chip">YouTube Data API</span>
+            <span class="chip">TikTok Posting API</span>
+            <span class="chip">Play GCS</span>
+            <span class="chip">App Store Connect</span>
+            <span class="chip">AdMob</span>
+          </div>
+          <h3>Next</h3>
+          <ul>
+            <li>TikTok Production Live — list + metrics after <code>video.list</code>.</li>
+            <li>Widen Refresh windows so tracked all-time revenue / downloads cover full store history.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <span>Ops dashboard · Marketing desk — case study</span>
+      <span>Overview · Technical · Revenue · Downloads</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const panels = {
+        overview: document.getElementById("version-overview"),
+        technical: document.getElementById("version-technical"),
+      };
+      const buttons = document.querySelectorAll(".version-switch button");
+      const hint = document.getElementById("version-hint");
+      const hints = {
+        overview: 'Overview — plain-language ops and marketing story.',
+        technical: 'Technical — dash APIs, revenue/downloads ledger, marketing, hard problems.',
+      };
+
+      function setVersion(version) {
+        Object.entries(panels).forEach(([key, el]) => {
+          el.hidden = key !== version;
+        });
+        buttons.forEach((btn) => {
+          const on = btn.dataset.version === version;
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        hint.textContent = hints[version] || "";
+        try {
+          localStorage.setItem("dash-mkt-case-study-version", version);
+        } catch (_) {}
+        const expected =
+          version === "technical" ? "#version-technical" : "#version-overview";
+        if (location.hash !== expected) {
+          history.replaceState(
+            null,
+            "",
+            location.pathname + location.search + expected
+          );
+        }
+      }
+      window.setCaseStudyVersion = setVersion;
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => setVersion(btn.dataset.version));
+      });
+
+      function versionFromHash() {
+        const h = (location.hash || "").replace(/^#/, "");
+        if (
+          h === "version-technical" ||
+          h === "technical" ||
+          h.startsWith("tech-")
+        ) {
+          return "technical";
+        }
+        if (
+          h === "version-overview" ||
+          h === "overview" ||
+          h.startsWith("ov-")
+        ) {
+          return "overview";
+        }
+        return null;
+      }
+
+      let initial = "overview";
+      try {
+        const saved = localStorage.getItem("dash-mkt-case-study-version");
+        if (saved === "overview" || saved === "technical") initial = saved;
+      } catch (_) {}
+      const fromHash = versionFromHash();
+      if (fromHash) initial = fromHash;
+      setVersion(initial);
+
+      window.addEventListener("hashchange", () => {
+        const next = versionFromHash();
+        if (next) setVersion(next);
+      });
+
+      function resolveCaseStudyAsset(rel) {
+        if (!rel || /^(https?:|data:|\/)/i.test(rel)) return rel;
+        const params = new URLSearchParams(location.search);
+        const docPath = params.get("path") || "";
+        if (location.pathname.includes("/api/docs/file") && docPath) {
+          const dir = docPath.replace(/[^/]+$/, "");
+          return (
+            "/api/docs/file?path=" + encodeURIComponent(dir + rel.replace(/^\.\//, ""))
+          );
+        }
+        return rel;
+      }
+
+      // Server may already rewrite src to /api/docs/file?path=…; keep client path
+      // fix for older dash builds. Absolute /api URLs are left alone.
+      document.querySelectorAll(".shot-frame img").forEach((img) => {
+        const frame = img.closest(".shot-frame");
+        const raw = img.getAttribute("src");
+        if (raw) {
+          const next = resolveCaseStudyAsset(raw);
+          if (next !== raw) img.setAttribute("src", next);
+          frame.classList.add("has-image");
+        }
+      });
+    })();
+  </script>
+</body>
